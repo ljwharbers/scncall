@@ -433,12 +433,12 @@ write_sim_dataset = function(sim, dir) {
 #' Uses the yaml package when installed, otherwise a minimal parser for the
 #' subset used in the sample and caller yaml files (nested maps, scalars,
 #' inline `[a, b]` lists and `{k: v}` maps, `#` comments). The sample yaml layout is
-#' `system.file("extdata", "sample_template.yaml", package = "scncall")`.
+#' `system.file("extdata", "sample_template.yaml", package = "scphasedcn")`.
 #' @param file path
 #' @return nested list
 #' @export
 #' @examples
-#' str(read_config(system.file("extdata", "sample_template.yaml", package = "scncall"))$samples)
+#' str(read_config(system.file("extdata", "sample_template.yaml", package = "scphasedcn"))$samples)
 read_config = function(file) {
   if (length(file) != 1 || !nzchar(file) || !file.exists(file)) stop("read_config: no such file: '", file, "'")
   if (requireNamespace("yaml", quietly = TRUE)) return(yaml::read_yaml(file))

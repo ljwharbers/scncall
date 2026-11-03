@@ -25,7 +25,7 @@ caller_normal(
 )
 }
 \arguments{
-\item{feat}{features long table (\code{vignette("scncall-outputs", package = "scncall")})}
+\item{feat}{features long table (\code{vignette("scphasedcn-outputs", package = "scphasedcn")})}
 
 \item{params}{\code{\link[=caller_defaults]{caller_defaults()}}}
 
@@ -63,7 +63,7 @@ same construction) before the per-class pooled thresholds}
 \code{\link[=select_null_cells]{select_null_cells()}} checks); NULL = every \code{null_region}}
 }
 \value{
-\code{scncall} (mode normal) with \code{scores}, \code{thresholds} (column \code{level}:
+\code{scphasedcn} (mode normal) with \code{scores}, \code{thresholds} (column \code{level}:
 cell, pool_type, pool_knn), \code{calls} (cell and pool level; \code{resolved} for gains changed by
 \code{\link[=resolve_nested]{resolve_nested()}}), \code{events}, \code{pools}, \code{null_fit = list(tpar, rho, null_cells, selection, pool_scale, sex, vote_bins, rho_chrom)} (\code{vote_bins}: the \code{\link[=vote_bins]{vote_bins()}} table with \code{params$calib = "votes"}; \code{rho_chrom}: the
 \code{\link[=rho_by_chrom]{rho_by_chrom()}} table with \code{params$calib_rho = "chrom"})

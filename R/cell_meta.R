@@ -19,7 +19,7 @@
 #'   group`), e.g. spatial regions or RNA clusters; NA = all-cell pseudobulk.
 #'
 #' Barcodes are matched as given (a trailing `-1` is stripped from every input, as the extractor does).
-#' @param cells_qc `cells_qc.tsv` written by `splongcn` (path), its table, or the extraction directory; NULL = the
+#' @param cells_qc `cells_qc.tsv` written by the extractor (`scphasedcn run`; path), its table, or the extraction directory; NULL = the
 #'   cells of the other inputs
 #' @param cell_types NULL, a path or table with columns `cell` and `cell_type` (else the first two columns), or a
 #'   character vector named by cell

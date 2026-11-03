@@ -40,7 +40,7 @@ regions data.table (passes \code{\link[=check_regions]{check_regions()}})
 Arms (\code{\link[=arm_table]{arm_table()}}), whole chromosomes (first to last bin), tiles of \code{params$tile_sizes}
 (one per \code{\link[=window_ids]{window_ids()}} window, named by \code{\link[=tile_name]{tile_name()}}, \verb{end = min(start + size, chromosome end)})
 and named events, on the chromosomes that have usable bins (chrY only for males). Regions without a
-usable bin are dropped. Columns follow \code{vignette("scncall-outputs", package = "scncall")}: \code{n_bins} / \code{n_use} count all / usable
+usable bin are dropped. Columns follow \code{vignette("scphasedcn-outputs", package = "scphasedcn")}: \code{n_bins} / \code{n_use} count all / usable
 bins under the containment rule; tiles are \code{eligible} when \verb{n_bins >= 0.9 * size / bin width} and
 \code{n_use >= 0.7 * n_bins} (the eligibility rule of the spike-in calibration), other regions when they
 have a usable bin; \code{null_region} = arm, chrom and tile regions on autosomes not in \code{null_exclude}

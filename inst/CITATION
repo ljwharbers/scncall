@@ -1,12 +1,12 @@
 bibentry(
   bibtype = "Manual",
-  title = "scncall: single-cell copy-number calling from long-read single-cell DNA data",
+  title = "scphasedcn: single-cell copy-number calling from long-read single-cell DNA data",
   author = person("Luuk", "Harbers"),
   year = "2026",
   note = paste("R package version", meta$Version,
                "- please also cite the SPLONGGET paper (citation to be added on publication)"),
-  url = "https://github.com/ljwharbers/scncall",
-  textVersion = paste0("Harbers L (2026). scncall: single-cell copy-number calling from long-read single-cell DNA ",
+  url = "https://github.com/ljwharbers/scphasedcn",
+  textVersion = paste0("Harbers L (2026). scphasedcn: single-cell copy-number calling from long-read single-cell DNA ",
                        "data. R package version ", meta$Version,
-                       ". https://github.com/ljwharbers/scncall")
+                       ". https://github.com/ljwharbers/scphasedcn")
 )

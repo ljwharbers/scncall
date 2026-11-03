@@ -83,7 +83,7 @@ def check_reference(ref: dict, require_fasta: bool = True) -> list[str]:
             warn.append(f"no {ref['fasta']}.fai: pysam builds it next to the FASTA (needs write access)")
     elif require_fasta:
         raise SystemExit("need --fasta (or reference.fasta in the yaml): the caller needs the GC content per bin; "
-                         "use --no-gc to extract without it (that output is not callable by scncall)")
+                         "use --no-gc to extract without it (that output is not callable by the scphasedcn R caller)")
     return warn
 
 

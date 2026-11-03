@@ -1,4 +1,4 @@
-"""Merge per-chromosome partials into the per-sample outputs (layout: the scncall-inputs vignette)."""
+"""Merge per-chromosome partials into the per-sample outputs (layout: the scphasedcn-inputs vignette)."""
 from __future__ import annotations
 
 import json

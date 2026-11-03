@@ -2,7 +2,7 @@
 # What: the pipeline of the copy-number caller: the top-level call_scn() (features ->
 #       optional chromatin embedding -> normal-tissue caller, or tumour-mode clone caller), the caller
 #       parameters from inst/config/caller.yaml (caller_params), the output writer / reader
-#       (write_scncall, read_scncall), a headline summary (scncall_summary) and the null false-call
+#       (write_scphasedcn, read_scphasedcn), a headline summary (scphasedcn_summary) and the null false-call
 #       accounting on the null cells (null_false_calls).
 # Why: the feature step (features.R), the scorer (caller.R) and the tumour mode (clones_*.R) are separate building
 #      blocks; a user runs one
@@ -10,7 +10,7 @@
 #      output directory with flat tables, a parameter file and run notes.
 # Inputs: an extraction directory (read_sample_depth() layout) or a precomputed `scn_features` (cell_features()),
 #         optional cell metadata, null cells, multiplets, events.
-# Outputs: `scncall` objects; <out>/{cells,calls,events,pooled_calls,thresholds,null_fit,false_calls,...}.tsv,
+# Outputs: `scphasedcn` objects; <out>/{cells,calls,events,pooled_calls,thresholds,null_fit,false_calls,...}.tsv,
 #          result.rds, params.yaml, NOTES.md.
 
 utils::globalVariables(c("called", "reportable", "level", "cell", "n_calls", "n_events", "prob", "qc_pass",
@@ -32,14 +32,14 @@ utils::globalVariables(c("called", "reportable", "level", "cell", "n_calls", "n_
 #' e.g. `n_draws`, `pool_loo`). When a block is present the result carries it as `$tumour` / `$normal`, filled
 #' up to the full defaults ([clone_defaults()], the defaults of [caller_normal()]); [call_scn()] passes it to the
 #' caller of its mode (its `caller_args` take precedence) and records the values used in the result's `params`,
-#' so the `params.yaml` of [write_scncall()] reads back with this function.
+#' so the `params.yaml` of [write_scphasedcn()] reads back with this function.
 #' @param file YAML file (NULL = the package's `caller.yaml`; a missing file gives the defaults)
 #' @param overrides named list of values that replace the file's / default values
 #' @return named list (the keys of [caller_defaults()], plus `tumour` / `normal` when the file has those blocks)
 #' @export
 caller_params = function(file = NULL, overrides = list()) {
   p = caller_defaults()
-  if (is.null(file)) file = system.file("config", "caller.yaml", package = "scncall")
+  if (is.null(file)) file = system.file("config", "caller.yaml", package = "scphasedcn")
   if (length(file) == 1 && nzchar(file) && file.exists(file)) {
     y = read_config(file)
     if (!is.null(y$caller) && is.list(y$caller)) y = y$caller
@@ -232,16 +232,16 @@ feature_windows = function(dir, features, method = "model", size = 1e6, min_cell
   window_matrices(scn, norm, size)
 }
 
-# code revision of a run: SCNCALL_REVISION (env), the commit an install_github / pak install records (RemoteSha), or
-# `git rev-parse` only when the working directory is a scncall source checkout (a run from the repository
+# code revision of a run: SCPHASEDCN_REVISION (env), the commit an install_github / pak install records (RemoteSha), or
+# `git rev-parse` only when the working directory is a scphasedcn source checkout (a run from the repository
 # root), so a run never records the revision of an unrelated repository
 git_rev = function() {
-  env = Sys.getenv("SCNCALL_REVISION")
+  env = Sys.getenv("SCPHASEDCN_REVISION")
   if (nzchar(env)) return(env)
-  sha = tryCatch(utils::packageDescription("scncall")$RemoteSha, error = function(e) NULL)
+  sha = tryCatch(utils::packageDescription("scphasedcn")$RemoteSha, error = function(e) NULL)
   if (is.character(sha) && length(sha) == 1 && nzchar(sha)) return(substr(sha, 1, 7))
   src = file.exists("DESCRIPTION") &&
-    isTRUE(tryCatch(read.dcf("DESCRIPTION", fields = "Package")[1, 1] == "scncall", error = function(e) FALSE))
+    isTRUE(tryCatch(read.dcf("DESCRIPTION", fields = "Package")[1, 1] == "scphasedcn", error = function(e) FALSE))
   if (src) {
     r = tryCatch(suppressWarnings(system2("git", c("rev-parse", "--short", "HEAD"), stdout = TRUE, stderr = FALSE)),
                  error = function(e) character())
@@ -320,7 +320,7 @@ utils::globalVariables(c("st", "k", "region"))
 #' @param caller_args extra arguments for [caller_normal()] / `caller_tumour()` (e.g. `n_draws`, `opts`); they take
 #'   precedence over `params$normal` / `params$tumour` (tumour: `opts` merged key by key)
 #' @param ... extra arguments for [cell_features()] (e.g. `centromeres`, `classes`, `qc`)
-#' @return `scncall` with `features` (the long table), `feature_info` (path, cells, phasing, notes), `scores`
+#' @return `scphasedcn` with `features` (the long table), `feature_info` (path, cells, phasing, notes), `scores`
 #'   (normal, `keep_scores`), `thresholds`, `calls`, `events`, `pools`, `null_fit`, `false_calls` (normal:
 #'   [null_false_calls()]), `embedding`, clone components (tumour), `params` (the caller parameters plus the
 #'   arguments used: `normal` = every [caller_normal()] argument of the run, `tumour` = the full tumour options) and
@@ -521,8 +521,8 @@ call_scn = function(dir, mode = c("normal", "tumour"), cell_meta = NULL, cells =
   host = Sys.info()[["nodename"]]
   res$notes = c(res$notes,
                 sprintf("call_scn %s: %.1f min (features %.1f min) on %s, %s", mode, mins(), t_feat, host, format(Sys.time(), "%F %T")),
-                sprintf("scncall %s from %s; git %s", as.character(utils::packageVersion("scncall")),
-                        tryCatch(find.package("scncall"), error = function(e) "?"), git_rev()),
+                sprintf("scphasedcn %s from %s; git %s", as.character(utils::packageVersion("scphasedcn")),
+                        tryCatch(find.package("scphasedcn"), error = function(e) "?"), git_rev()),
                 if (!is.null(feat_path)) sprintf("features: %s", feat_path) else "features: computed",
                 inputs)
   res$run = list(mode = mode, minutes = mins(), host = host, time = Sys.time(), git = git_rev(), inputs = inputs)
@@ -567,15 +567,16 @@ utils::globalVariables("part")
 #' `thresholds.tsv`, `null_fit.tsv` (depth t rows + rho), `false_calls.tsv` + `false_events.tsv` (normal mode),
 #' tumour mode: `clones.tsv`, `assignments.tsv`, `clone_segments.tsv`, `clone_profiles.tsv.gz`,
 #' `reference_pool.txt`; `regions.tsv`; `result.rds` (the object without scores and features), `params.yaml`,
-#' `summary.tsv` ([scncall_summary()]) and `NOTES.md`. Optional: `scores.tsv.gz`, `features.tsv.gz`.
-#' @param obj `scncall` from [call_scn()]
+#' `summary.tsv` ([scphasedcn_summary()]) and `NOTES.md`. Optional: `scores.tsv.gz`, `features.tsv.gz`.
+#' @param obj `scphasedcn` from [call_scn()]
 #' @param out output directory (created)
 #' @param write_scores also write the per cell x region scores
 #' @param write_features also write the features long table
 #' @return named character vector of the written paths, invisibly
 #' @export
-write_scncall = function(obj, out, write_scores = FALSE, write_features = FALSE) {
-  if (!inherits(obj, "scncall")) stop("write_scncall: not an scncall object")
+write_scphasedcn = function(obj, out, write_scores = FALSE, write_features = FALSE) {
+  obj = relabel_legacy(obj)
+  if (!inherits(obj, "scphasedcn")) stop("write_scphasedcn: not a scphasedcn object")
   dir.create(out, recursive = TRUE, showWarnings = FALSE)
   files = character()
   w = function(d, name) {
@@ -620,9 +621,9 @@ write_scncall = function(obj, out, write_scores = FALSE, write_features = FALSE)
   if (write_features && !is.null(obj$features)) {
     p = file.path(out, "features.tsv.gz"); fwrite(obj$features, p, sep = "\t", compress = "gzip"); files[["features.tsv.gz"]] = p
   }
-  sm = scncall_summary(obj)
+  sm = scphasedcn_summary(obj)
   w(sm, "summary.tsv")
-  writeLines(c("# scncall caller parameters", yaml_lines(obj$params)), file.path(out, "params.yaml"))
+  writeLines(c("# scphasedcn caller parameters", yaml_lines(obj$params)), file.path(out, "params.yaml"))
   files[["params.yaml"]] = file.path(out, "params.yaml")
   slim = obj
   slim["scores"] = list(NULL)
@@ -636,12 +637,12 @@ write_scncall = function(obj, out, write_scores = FALSE, write_features = FALSE)
     c(paste0("| ", paste(names(d), collapse = " | "), " |"), paste0("|", strrep("---|", ncol(d))),
       if (nrow(d)) paste0("| ", do.call(paste, c(lapply(d, fmt), sep = " | ")), " |"))
   }
-  notes = c(sprintf("# scncall result (%s mode)", obj$mode), "",
+  notes = c(sprintf("# scphasedcn result (%s mode)", obj$mode), "",
             sprintf("Written %s on %s.", format(Sys.time(), "%F %T"), Sys.info()[["nodename"]]), "",
             "## Run notes", "", paste0("- ", obj$notes), "",
             "## Summary", "", md_tab(sm), "",
             "## Files", "", paste0("- `", names(files), "`"), "- `NOTES.md` (this file)", "",
-            "`result.rds` holds the full object without `scores` and `features` (read it with `read_scncall()`).",
+            "`result.rds` holds the full object without `scores` and `features` (read it with `read_scphasedcn()`).",
             "`calls.tsv` holds the cell- and clone-level calls (normal mode: called rows only; the rows that were",
             "scored but not called are in `result.rds`); `pooled_calls.tsv` the called pool rows.")
   writeLines(notes, file.path(out, "NOTES.md"))
@@ -649,21 +650,28 @@ write_scncall = function(obj, out, write_scores = FALSE, write_features = FALSE)
   invisible(files)
 }
 
-#' Read a caller result written by [write_scncall()]
+# results written before the rename (working name scncall, 0.1.0-pre builds) carry the class "scncall":
+# relabel it so that they read, write and print as scphasedcn objects
+relabel_legacy = function(x) {
+  if (!inherits(x, "scphasedcn") && inherits(x, "scncall")) class(x)[class(x) == "scncall"] = "scphasedcn"
+  x
+}
+
+#' Read a caller result written by [write_scphasedcn()]
 #' @param out output directory (or the path of its `result.rds`)
-#' @return `scncall`
+#' @return `scphasedcn`
 #' @export
-read_scncall = function(out) {
+read_scphasedcn = function(out) {
   p = if (dir.exists(out)) file.path(out, "result.rds") else out
-  if (!file.exists(p)) stop("read_scncall: no result.rds in ", out)
-  x = readRDS(p)
-  if (!inherits(x, "scncall")) stop("read_scncall: ", p, " is not an scncall object")
+  if (!file.exists(p)) stop("read_scphasedcn: no result.rds in ", out)
+  x = relabel_legacy(readRDS(p))
+  if (!inherits(x, "scphasedcn")) stop("read_scphasedcn: ", p, " is not a scphasedcn object")
   x
 }
 
 #' Headline numbers of a caller result
 #'
-#' @param obj `scncall`
+#' @param obj `scphasedcn`
 #' @return data.table section, item, value, n (denominator or count), note. Sections: `cells` (cells, null
 #'   cells, multiplets, cells with a reportable call / event), `calls` (called cell / pool / clone rows per
 #'   level, class and state; `n` = reportable among them), `false_calls` (null false calls per 1,000 per class
@@ -671,7 +679,7 @@ read_scncall = function(out) {
 #'   per state), `events` (reportable events per cell and per null cell, pooled calls), `clones` (clones,
 #'   assigned cells, reference pool).
 #' @export
-scncall_summary = function(obj) {
+scphasedcn_summary = function(obj) {
   out = list()
   add = function(section, item, value, n = NA_real_, note = NA_character_)
     out[[length(out) + 1]] <<- data.table(section = section, item = item, value = as.numeric(value), n = as.numeric(n), note = as.character(note))

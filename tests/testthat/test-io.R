@@ -12,7 +12,7 @@ test_that("bins h5ad round trip is exact and tolerates missing layers", {
   expect_equal(scn2$bins$start, sim_small$scn$bins$start)
   expect_true(is.logical(scn2$bins$is_centromere))
   # the caller's sample reader: same counts and cells, the fragments path and the cells_qc.tsv columns
-  scn3 = scncall:::read_sample_depth(dir, layers = "span")
+  scn3 = scphasedcn:::read_sample_depth(dir, layers = "span")
   expect_equal(as.matrix(scn3$counts), as.matrix(sim_small$scn$counts), ignore_attr = TRUE)
   expect_identical(scn3$cells$cell, sim_small$scn$cells$cell)
   expect_setequal(names(scn3$layers), "span")
@@ -43,7 +43,7 @@ test_that("the fallback yaml parser handles the config subset", {
   txt = c("# comment", "reference:", "  fasta: /a/b.fa", "outputs:", "  root: /x", "samples:", "  S1:",
           "    sex: male", "    chroms: [chr1, chrX]", "    events: {g20: \"chr20:28000000-\", c5: chr5}", "    n: 3")
   f = tempfile(fileext = ".yaml"); writeLines(txt, f)
-  cfg = scncall:::parse_simple_yaml(readLines(f))
+  cfg = scphasedcn:::parse_simple_yaml(readLines(f))
   expect_equal(cfg$reference$fasta, "/a/b.fa")
   expect_equal(cfg$samples$S1$sex, "male")
   expect_equal(unlist(cfg$samples$S1$chroms), c("chr1", "chrX"))

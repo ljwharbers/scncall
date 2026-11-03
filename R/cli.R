@@ -40,7 +40,7 @@ cli_args = function(args = commandArgs(trailingOnly = TRUE), defaults = list(), 
 #' Sample entry of a sample yaml (with its extraction directory)
 #'
 #' The extraction directory is the sample's `extract_dir`, else `<outputs.root>/<sample>/extract` (where
-#' `splongcn` writes it).
+#' `scphasedcn run` writes it).
 #' @param cfg sample yaml read with [read_config()]
 #' @param sample sample name
 #' @return list with the sample fields plus `name`, `dir` (extraction output dir)

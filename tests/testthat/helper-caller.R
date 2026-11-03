@@ -113,7 +113,7 @@ fake_regions = function(bins = sim_genome(), tiles = c("5Mb" = 5e6, "10Mb" = 1e7
 #' region, state in loss | gain | cnloh): z shifted by the state's log2 shift / max(sd_null, 0.05)
 #' (caller_defaults()$shifts; cnloh 0) and nA at f = 0.98 (loss, cnloh) or 2/3 (gain), haplotype A major.
 #' Events change only the listed rows (overlapping regions are not propagated). x, e, log2ratio, z and
-#' sd_null satisfy the definitions of the features table (vignette("scncall-outputs")) row by row; sd_null is drawn per cell x sd_class (not re-estimated).
+#' sd_null satisfy the definitions of the features table (vignette("scphasedcn-outputs")) row by row; sd_null is drawn per cell x sd_class (not re-estimated).
 #' Extra column `truth` (neutral | loss | gain | cnloh). `hap_frac`: fraction of a cell's fragments that give a
 #' molecule vote (n_hap ~ Poisson(hap_frac x n_frag x n_bins / genome bins)). Strata from n_frag ~ lognormal(log 3e4, 0.6).
 fake_features = function(n_cells, regions, events = NULL, tdf = 7, rho = 0.002, seed = 1,

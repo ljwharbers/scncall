@@ -13,9 +13,9 @@
 #      copy-number-flat cells can carry tumour haplotypes, so the normal reference is cleaned with the allele
 #      channel.
 # Inputs: an `scn_features`-like list (see [caller_tumour()] for the components used) or the
-#         individual tables (features, regions, votes, atoms; vignette("scncall-outputs", package = "scncall")).
+#         individual tables (features, regions, votes, atoms; vignette("scphasedcn-outputs", package = "scphasedcn")).
 # Outputs: data.tables (clone feature matrix, clones, profiles, state log-likelihoods, segments,
-#          assignments, calls) and an `scncall` object in mode "tumour".
+#          assignments, calls) and a `scphasedcn` object in mode "tumour".
 # The globalVariables() block below covers the column names used across all four clones_*.R files.
 
 utils::globalVariables(c(
@@ -143,7 +143,7 @@ cell_state_scores = function(inp, regs, rows, k_members, tpar, rho, params, ref_
 }
 utils::globalVariables(c("s_depth", "s_allele", "i.oA", "i.oN", "oclone"))
 
-b_fun = function(f) get(f, envir = asNamespace("scncall"))
+b_fun = function(f) get(f, envir = asNamespace("scphasedcn"))
 
 # score rows (cell_state_scores output) with the scorer: one non-neutral state per row (the clone state, shift
 # c * log2(cn / base), major fraction 0.5 + a (f_state - 0.5)) or, for null rows, a given state set (B's tumour set)
@@ -220,7 +220,7 @@ utils::globalVariables(c("hyp", "kind", "call_s_comb", "n_called"))
 #' @param control_regions optional user control regions (regions table) replacing the automatic ones
 #' @param opts tumour-mode options ([clone_defaults()])
 #' @param verbose log progress
-#' @return `scncall` (mode tumour) with clones, assignments, segments, profiles, calls (plus `extra`:
+#' @return `scphasedcn` (mode tumour) with clones, assignments, segments, profiles, calls (plus `extra`:
 #'   intermediate results in `null_fit$clones`)
 #' @export
 caller_tumour = function(feat, params = caller_defaults(), multiplets = NULL, control_regions = NULL, opts = clone_defaults(),
@@ -669,12 +669,12 @@ caller_tumour = function(feat, params = caller_defaults(), multiplets = NULL, co
                                                    pooled_fallback = stratum == "pooled" | n_null < params$min_null_rows)] else NULL
   if (!is.null(thr_tab) && "hyp" %in% names(thr_tab)) thresholds[, `:=`(pooled_fallback = thr_tab$pooled_fallback, hyp = thr_tab$hyp)]
   # events: the called (confirmed) reportable calls consolidated per cell / clone, an empty table otherwise
-  events = if (exists("consolidate_calls", envir = asNamespace("scncall"), inherits = FALSE)) {
+  events = if (exists("consolidate_calls", envir = asNamespace("scphasedcn"), inherits = FALSE)) {
     b_fun("consolidate_calls")(if (is.null(calls)) data.table(cell = character(), region = character(), class = character(),
                                  chrom = character(), start = numeric(), end = numeric(), state = character(), score = numeric(),
                                  called = logical(), level = character(), reportable = logical()) else calls, all_regions)
   } else NULL
-  new_scncall("tumour", cells = inp$cells, regions = all_regions, features = NULL, thresholds = thresholds, calls = calls, events = events,
+  new_scphasedcn("tumour", cells = inp$cells, regions = all_regions, features = NULL, thresholds = thresholds, calls = calls, events = events,
               clones = clone_tab, assignments = asg, segments = sg, profiles = st$profiles,
               null_fit = list(tpar = inp$tpar, rho = inp$rho, ref_thr = cr$thr, rho_confirm = rho_c, tpar_confirm = tpar_c,
                               rho_pool_features = rho_feat, ref_null = ref_null, confirm_null = null_confirm,

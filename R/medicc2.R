@@ -5,7 +5,7 @@
 # Why: every clone's `state` (major:minor) is oriented by its own pseudobulk, so major / minor do not name the same
 #      haplotype across clones. MEDICC2's allele-specific mode treats cn_a / cn_b as fixed haplotypes; two clones that
 #      lost opposite haplotypes must get swapped cn_a / cn_b, and two that lost the same one identical values.
-# Inputs: segments, clones and assignments tables of a tumour run (vignette("scncall-outputs", package = "scncall")), the run's molecule votes
+# Inputs: segments, clones and assignments tables of a tumour run (vignette("scphasedcn-outputs", package = "scphasedcn")), the run's molecule votes
 #         and atoms (scn_features). Outputs: data.tables (pieces, orientation QC, block orientation, MEDICC2 table).
 
 #' Common copy-number pieces of the clones of a tumour run (MEDICC2 export, step 1)

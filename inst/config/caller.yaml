@@ -1,4 +1,4 @@
-# Caller parameters (read by scncall::caller_params()). One key per caller_defaults() entry, with
+# Caller parameters (read by scphasedcn::caller_params()). One key per caller_defaults() entry, with
 # the default value; edit a copy and pass it with `--caller-config` (inst/scripts/call_scn.R) or
 # caller_params(file = ...). Sample keys (paths, sex, events) stay in the sample yaml (inst/extdata/sample_template.yaml). The `normal:` and
 # `tumour:` blocks at the end are the arguments of the normal-tissue caller (caller_normal()) and the tumour-mode

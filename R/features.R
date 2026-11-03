@@ -8,7 +8,7 @@
 #       and phase set, phase-block orientation (chromosome-wide anchored phase, leave-one-out
 #       pseudobulk / clone orientation, or mirrored), and the long features table.
 # Why: one function, cell_features(), builds every feature table that the scorer and the
-#      tumour mode consume (schemas in vignette("scncall-outputs", package = "scncall")).
+#      tumour mode consume (schemas in vignette("scphasedcn-outputs", package = "scphasedcn")).
 # Inputs: an extraction directory (bins_100kb.h5ad, fragments.tsv.gz, cells_qc.tsv; read_sample_depth()), a centromere table,
 #         cell metadata.
 # Outputs: an `scn_features` list: long (features), regions, cells, votes, atoms, win, params, notes.
@@ -169,7 +169,7 @@ region_bin_matrix = function(bins, regions, use = NULL) {
 #' Arms ([arm_table()]), whole chromosomes (first to last bin), tiles of `params$tile_sizes`
 #' (one per [window_ids()] window, named by [tile_name()], `end = min(start + size, chromosome end)`)
 #' and named events, on the chromosomes that have usable bins (chrY only for males). Regions without a
-#' usable bin are dropped. Columns follow `vignette("scncall-outputs", package = "scncall")`: `n_bins` / `n_use` count all / usable
+#' usable bin are dropped. Columns follow `vignette("scphasedcn-outputs", package = "scphasedcn")`: `n_bins` / `n_use` count all / usable
 #' bins under the containment rule; tiles are `eligible` when `n_bins >= 0.9 * size / bin width` and
 #' `n_use >= 0.7 * n_bins` (the eligibility rule of the spike-in calibration), other regions when they
 #' have a usable bin; `null_region` = arm, chrom and tile regions on autosomes not in `null_exclude`
@@ -739,7 +739,7 @@ read_sample_depth = function(dir, layers = character()) {
 #' and chrX), normalises depth ([normalise_depth()]: `celltype` for normal tissue, `model` for tumours), builds the
 #' regions ([region_set()]), the depth features ([depth_features()]), the molecule votes
 #' ([read_votes()]) and the oriented allele features ([allelic_features()]), and joins them into the
-#' long features table (`vignette("scncall-outputs", package = "scncall")`).
+#' long features table (`vignette("scphasedcn-outputs", package = "scphasedcn")`).
 #' @param dir extraction directory (bins_100kb.h5ad, fragments.tsv.gz + .tbi, cells_qc.tsv)
 #' @param cells NULL (QC-pass cells) or the cells to use
 #' @param cell_meta NULL or a data.table with `cell` and optional `cell_type, flat, fold, group, stratum,

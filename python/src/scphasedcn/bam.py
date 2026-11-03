@@ -1,6 +1,6 @@
 """One pass over a chromosome of a SPLONGGET DNA BAM: record filter, fragment arrays, per-cell record counters.
 
-Filter (see vignette("scncall-inputs", package = "scncall")): primary, not duplicate, MAPQ >= min_mapq, CB in the whitelist; "-" (unassigned)
+Filter (see vignette("scphasedcn-inputs", package = "scphasedcn")): primary, not duplicate, MAPQ >= min_mapq, CB in the whitelist; "-" (unassigned)
 is counted and dropped; secondaries are counted and skipped; supplementaries are counted and skipped but the primary's
 SA tag sets `has_SA`. Blacklist / TRF / centromere / peak membership is flagged after the loop (bins.py); blacklist-start
 fragments are excluded from the depth and allele layers but kept in the fragments table with the flag bit set.

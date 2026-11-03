@@ -16,8 +16,8 @@ nested list
 Uses the yaml package when installed, otherwise a minimal parser for the
 subset used in the sample and caller yaml files (nested maps, scalars,
 inline \verb{[a, b]} lists and \code{{k: v}} maps, \verb{#} comments). The sample yaml layout is
-\code{system.file("extdata", "sample_template.yaml", package = "scncall")}.
+\code{system.file("extdata", "sample_template.yaml", package = "scphasedcn")}.
 }
 \examples{
-str(read_config(system.file("extdata", "sample_template.yaml", package = "scncall"))$samples)
+str(read_config(system.file("extdata", "sample_template.yaml", package = "scphasedcn"))$samples)
 }

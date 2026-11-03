@@ -69,7 +69,7 @@ precedence over \code{params$normal} / \code{params$tumour} (tumour: \code{opts}
 \item{...}{extra arguments for \code{\link[=cell_features]{cell_features()}} (e.g. \code{centromeres}, \code{classes}, \code{qc})}
 }
 \value{
-\code{scncall} with \code{features} (the long table), \code{feature_info} (path, cells, phasing, notes), \code{scores}
+\code{scphasedcn} with \code{features} (the long table), \code{feature_info} (path, cells, phasing, notes), \code{scores}
 (normal, \code{keep_scores}), \code{thresholds}, \code{calls}, \code{events}, \code{pools}, \code{null_fit}, \code{false_calls} (normal:
 \code{\link[=null_false_calls]{null_false_calls()}}), \code{embedding}, clone components (tumour), \code{params} (the caller parameters plus the
 arguments used: \code{normal} = every \code{\link[=caller_normal]{caller_normal()}} argument of the run, \code{tumour} = the full tumour options) and

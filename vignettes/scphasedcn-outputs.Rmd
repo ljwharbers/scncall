@@ -11,8 +11,8 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ```
 
-`call_scn()` returns an `scncall` object; `write_scncall(res, out)` writes it as flat tables (the command line does
-both). `read_scncall(out)` reads a written run back.
+`call_scn()` returns a `scphasedcn` object; `write_scphasedcn(res, out)` writes it as flat tables (the command line does
+both). `read_scphasedcn(out)` reads a written run back.
 
 ## Files
 
@@ -27,7 +27,7 @@ both). `read_scncall(out)` reads a written run back.
 | `null_fit.tsv` | the depth null (Student-t per class x stratum) and the allelic overdispersion `rho` |
 | `false_calls.tsv`, `false_events.tsv` | normal mode: the realised false-call rate on the null cells |
 | `clones.tsv`, `assignments.tsv`, `clone_segments.tsv`, `clone_profiles.tsv.gz`, `reference_pool.txt` | tumour mode: clones, per-cell assignment, clone copy-number segments, clone window profiles, the normal reference cells |
-| `summary.tsv` | headline numbers (`scncall_summary()`) |
+| `summary.tsv` | headline numbers (`scphasedcn_summary()`) |
 | `params.yaml` | every parameter of the run; reads back with `caller_params("params.yaml")` |
 | `NOTES.md` | the run notes (inputs, steps, run time, package version) |
 | `result.rds` | the object without the large `scores` / `features` tables |
@@ -62,7 +62,7 @@ doublet-like).
 ## The object
 
 ```{r object, message = FALSE}
-library(scncall)
+library(scphasedcn)
 library(data.table)
 sim = simulate_scn(n_cells = 60, sex = "female", cell_types = c(a = 0.5, b = 0.5), events = NULL,
                    multiplet_rate = 0, depth = c(meanlog = log(12000), sdlog = 0.3), phase_block_mean = 1e9,
@@ -75,8 +75,8 @@ res = call_scn(d, "normal", sex = "female", centromeres = cen, null_cells = "sel
 names(res)
 res$thresholds[level == "cell" & fold == 0][1:5, .(score, class, stratum, q, thr, n_null)]
 out = file.path(tempdir(), "out_caller")
-invisible(write_scncall(res, out))
-res2 = read_scncall(out)
+invisible(write_scphasedcn(res, out))
+res2 = read_scphasedcn(out)
 identical(res2$calls, res$calls)
 ```
 

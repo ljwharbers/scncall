@@ -1,4 +1,4 @@
-url: https://ljwharbers.github.io/scncall/
+url: https://ljwharbers.github.io/scphasedcn/
 template:
   bootstrap: 5
 navbar:
@@ -6,8 +6,8 @@ navbar:
     left: [intro, reference, articles, news]
     right: [search, github]
 articles:
-  - title: Using scncall
+  - title: Using scphasedcn
     navbar: ~
     contents:
-      - scncall-inputs
-      - scncall-outputs
+      - scphasedcn-inputs
+      - scphasedcn-outputs

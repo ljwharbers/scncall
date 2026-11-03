@@ -1,30 +1,30 @@
-# scncall-package.R
+# scphasedcn-package.R
 # What: package-level documentation and imports.
 # Why: roxygen2 generates NAMESPACE from these tags; keeping all cross-package
 #      imports here avoids scattered @importFrom lines and makes R CMD check
 #      report unused imports in one place.
 # Inputs: none. Outputs: none (documentation only).
 
-#' scncall: single-cell copy-number calling from long-read single-cell DNA data
+#' scphasedcn: single-cell copy-number calling from long-read single-cell DNA data
 #'
 #' The caller [call_scn()] runs on an extraction directory written by the
-#' companion Python package `splongcn`: per-cell region features
+#' companion Python extractor (`scphasedcn run`): per-cell region features
 #' ([cell_features()]), then a normal-tissue mode ([caller_normal()]) or a
 #' tumour mode ([caller_tumour()]: clone discovery, clone states, cell
-#' re-assignment); [write_scncall()] writes the result tables. Supporting
+#' re-assignment); [write_scphasedcn()] writes the result tables. Supporting
 #' functions: readers for the extraction outputs ([read_bins_h5ad()],
 #' [read_fragments()]), bins and arms ([annotate_arms()], [bin_filter()]),
 #' the depth references behind [normalise_depth()], beta-binomial allelic
 #' primitives, the MEDICC2 export ([medicc2_pieces()], [medicc2_table()]), plot helpers and a
 #' generative simulator ([simulate_scn()], [write_sim_dataset()]) used by the
-#' examples and tests. Start with `vignette("scncall")`.
+#' examples and tests. Start with `vignette("scphasedcn")`.
 #'
 #' Conventions: matrices are bins x cells (`dgCMatrix` for counts, dense for
 #' ratios); coordinates are 0-based half-open as in BED / the Python
 #' extraction layer; `=` assignment and data.table throughout.
 #'
 #' @keywords internal
-#' @aliases scncall-package
+#' @aliases scphasedcn-package
 #' @import data.table
 #' @importFrom methods as is new
 #' @importFrom stats median quantile rnorm rpois runif rbinom rgamma rlnorm rexp

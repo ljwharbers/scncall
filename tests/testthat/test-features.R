@@ -273,13 +273,13 @@ test_that("orient_blocks reproduces the reference leave-one-out orientation exac
   cl = rep(c("A", "B"), each = 20)
   v = fake_votes(40, atoms, clones = cl, events = data.table(clone = "B", chrom = "chr22", start = 0, end = NA, cnA = 1L, cnB = 0L),
                  mol_per_atom = 0.3)
-  map = scncall:::atom_region_map(atoms, regions)
+  map = scphasedcn:::atom_region_map(atoms, regions)
   for (g in list(NULL, cl)) {
-    gg = scncall:::check_groups(g, v)
-    ref = rbindlist(lapply(sort(unique(map$layer)), function(l) ref_orient_layer(scncall:::layer_blocks(v, map, l), gg, TRUE)))
+    gg = scphasedcn:::check_groups(g, v)
+    ref = rbindlist(lapply(sort(unique(map$layer)), function(l) ref_orient_layer(scphasedcn:::layer_blocks(v, map, l), gg, TRUE)))
     ref = ref[, .(cell, region = regions$region[ri], nA, nB, n_blocks)]
     o = orient_blocks(v, regions, atoms, groups = g)
     expect_identical(o, ref)
   }
-  expect_false(exists("read_phase_prior", envir = asNamespace("scncall"), inherits = FALSE))
+  expect_false(exists("read_phase_prior", envir = asNamespace("scphasedcn"), inherits = FALSE))
 })

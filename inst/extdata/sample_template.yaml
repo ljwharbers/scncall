@@ -1,10 +1,10 @@
-# Sample yaml shared by the extractor (`splongcn ... --config <yaml> --sample <key>`) and the caller
+# Sample yaml shared by the extractor (`scphasedcn ... --config <yaml> --sample <key>`) and the caller
 # (`call_scn.R --config <yaml> --sample <key>`). Copy it, fill in your paths, delete what you do not use.
 # Paths are absolute. The keys shown are the documented ones; unknown keys are ignored.
 reference:
   fasta: /path/to/GRCh38/genome.fa                 # required: hg38 with "chr" names, indexed (.fai); gives the GC per bin
   # centromeres: /path/to/centromeres.tsv          # optional: default = the hg38 table shipped with both packages
-  # blacklist_v2: /path/to/hg38-blacklist.v2.bed   # optional: default = the ENCODE blacklist v2 shipped with splongcn
+  # blacklist_v2: /path/to/hg38-blacklist.v2.bed   # optional: default = the ENCODE blacklist v2 shipped with the Python extractor
   # trf: /path/to/simple_repeats.trf.bed           # optional: tandem repeats (fraction per bin; omitted = no TRF mask)
 outputs:
   root: /path/to/results                           # per-sample outputs: <root>/<sample>/extract, <root>/<sample>/caller/<tag>
@@ -17,7 +17,7 @@ samples:
     # barcode_map: /path/to/barcode_mapping.tsv    # only if the whitelist is in RNA-barcode space: columns
     #                                              # atac_barcode, rna_barcode (translated to the BAM's ATAC space)
     phased_vcf: /path/to/het_phased.vcf.gz         # phased heterozygous SNPs (GT with |, PS tag), e.g. from
-    #                                              # Clair3 + longphase + `splongcn select-hets`
+    #                                              # Clair3 + longphase + `scphasedcn select-hets`
     # chroms: [chr1, chr2, ..., chr22, chrX]       # default: chr1-22, chrX, chrY, chrM
     # peaks: /path/to/peaks.bed                    # optional: ATAC peaks (FRiP in the QC table only)
     events:                                        # optional: known events, reported as their own regions

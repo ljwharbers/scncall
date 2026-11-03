@@ -252,7 +252,7 @@ test_that("clone_feature_matrix orients unoriented input by the all-cell pseudob
 test_that("caller_tumour finds the clones of sim_tum2 and their states", {
   res = tum2_result()
   tr = sim_truth(sim_tum2)
-  expect_s3_class(res, "scncall")
+  expect_s3_class(res, "scphasedcn")
   expect_equal(res$mode, "tumour")
   check_segments(res$segments)
   check_calls(res$calls)
@@ -302,12 +302,12 @@ test_that("caller_tumour stops on unknown or invalid tumour options before any w
   expect_error(caller_tumour(inp, opts = list(ref_null = "x"), verbose = FALSE), "ref_null")
   expect_error(caller_tumour(inp, opts = list(confirm_null = "x"), verbose = FALSE), "should be one of")
   expect_error(caller_tumour(inp, opts = list(bogus = 1), verbose = FALSE), "unknown option")
-  expect_identical(scncall:::check_clone_opts(list()), clone_defaults())
-  expect_identical(scncall:::check_clone_opts(list(split_pass = "disagree"))$split_pass, "disagree")
+  expect_identical(scphasedcn:::check_clone_opts(list()), clone_defaults())
+  expect_identical(scphasedcn:::check_clone_opts(list(split_pass = "disagree"))$split_pass, "disagree")
   # segment_clone() rules: clone_defaults() keys with segment_clone()'s defaults, checked as numbers >= 0
   rules = c("min_excess", "max_contra", "bal_frac", "min_bal_len")
   expect_equal(clone_defaults()[rules], lapply(formals(segment_clone)[rules], eval))
-  expect_identical(scncall:::check_clone_opts(list(max_contra = Inf, min_excess = 0))[rules],
+  expect_identical(scphasedcn:::check_clone_opts(list(max_contra = Inf, min_excess = 0))[rules],
                    list(min_excess = 0, max_contra = Inf, bal_frac = 0.75, min_bal_len = 2e7))
   expect_error(caller_tumour(inp, opts = list(bal_frac = -1), verbose = FALSE), "bal_frac")
   expect_error(caller_tumour(inp, opts = list(min_bal_len = "x"), verbose = FALSE), "min_bal_len")
@@ -357,10 +357,10 @@ test_that("region_features sums the 1 Mb windows inside each region and scales b
 test_that("region_block_votes sums the votes of overlapping regions as the feature step's per-layer layer_blocks", {
   inp = clone_input(tum2_input())
   rg = inp$regions[class %in% c("arm", "20Mb")]
-  rb = scncall:::region_block_votes(inp$votes, inp$atoms, rg)
-  m = scncall:::atom_region_map(inp$atoms, rg)
+  rb = scphasedcn:::region_block_votes(inp$votes, inp$atoms, rg)
+  m = scphasedcn:::atom_region_map(inp$atoms, rg)
   expect_gt(max(m$layer), 1L)                     # arms and 20 Mb tiles overlap
-  lb = rbindlist(lapply(sort(unique(m$layer)), function(l) scncall:::layer_blocks(inp$votes, m, l)))
+  lb = rbindlist(lapply(sort(unique(m$layer)), function(l) scphasedcn:::layer_blocks(inp$votes, m, l)))
   lb[, region := rg$region[ri]]
   x = merge(rb, lb, by = c("cell", "region", "ps"))
   expect_equal(nrow(x), nrow(rb))

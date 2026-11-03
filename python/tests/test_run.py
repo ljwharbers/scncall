@@ -1,9 +1,9 @@
-"""`splongcn run` (all chromosomes + merge), `select-hets`, and the early reference checks."""
+"""`scphasedcn run` (all chromosomes + merge), `select-hets`, and the early reference checks."""
 import anndata as ad
 import pysam
 import pytest
 
-from splongcn.cli import main
+from scphasedcn.cli import main
 
 
 def _common(genome, bam, out):

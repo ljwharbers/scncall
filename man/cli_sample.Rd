@@ -16,5 +16,5 @@ list with the sample fields plus \code{name}, \code{dir} (extraction output dir)
 }
 \description{
 The extraction directory is the sample's \code{extract_dir}, else \verb{<outputs.root>/<sample>/extract} (where
-\code{splongcn} writes it).
+\verb{scphasedcn run} writes it).
 }

@@ -1,8 +1,8 @@
-# Conda environment with everything scncall and splongcn need (R + Python + htslib tools).
+# Conda environment with everything scphasedcn needs (R and Python packages + htslib tools).
 #   conda env create -f environment.yml        (or: micromamba create -f environment.yml)
-#   conda activate scncall
+#   conda activate scphasedcn
 #   pip install ./python && R CMD INSTALL .
-name: scncall
+name: scphasedcn
 channels:
   - conda-forge
   - bioconda

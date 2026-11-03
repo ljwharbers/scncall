@@ -30,7 +30,7 @@ norm_result = function() {
 }
 
 test_that("caller_params reads caller.yaml (= caller_defaults) and applies overrides", {
-  f = system.file("config", "caller.yaml", package = "scncall")
+  f = system.file("config", "caller.yaml", package = "scphasedcn")
   expect_true(file.exists(f))
   pf = caller_params(f)
   expect_identical(pf[names(caller_defaults())], caller_defaults())
@@ -70,7 +70,7 @@ test_that("caller_params reads caller.yaml (= caller_defaults) and applies overr
   expect_equal(p4$normal$n_draws, 500); expect_false(p4$normal$pool_loo); expect_true(p4$normal$pool_standardize)
   writeLines(c("tumour:", "  nope: 1"), tf3)
   expect_warning(caller_params(tf3), "nope")
-  # params.yaml written by write_scncall reads back to the same parameters
+  # params.yaml written by write_scphasedcn reads back to the same parameters
   tf2 = tempfile(fileext = ".yaml")
   writeLines(yaml_lines(caller_defaults()), tf2)
   expect_equal(caller_params(tf2), caller_defaults())
@@ -88,7 +88,7 @@ test_that("multiplet_table normalises vectors, files and multiplet score tables"
 
 test_that("call_scn runs end to end on sim_norm_f (normal mode) in under 2 minutes", {
   res = norm_result()
-  expect_s3_class(res, "scncall")
+  expect_s3_class(res, "scphasedcn")
   expect_equal(res$mode, "normal")
   expect_lt(call_cache$norm_min, 2)
   expect_equal(nrow(res$cells), nrow(res$feature_info$cells))
@@ -114,11 +114,11 @@ test_that("call_scn runs end to end on sim_norm_f (normal mode) in under 2 minut
   expect_true(any(grepl("^call_scn normal", res$notes)))
 })
 
-test_that("write_scncall writes every file, read_scncall round-trips, scncall_summary has the headline rows", {
+test_that("write_scphasedcn writes every file, read_scphasedcn round-trips, scphasedcn_summary has the headline rows", {
   res = norm_result()
   out = file.path(tempdir(), "callscn_out")
   unlink(out, recursive = TRUE)
-  files = write_scncall(res, out, write_scores = TRUE)
+  files = write_scphasedcn(res, out, write_scores = TRUE)
   want = c("cells.tsv", "calls.tsv", "pooled_calls.tsv", "events.tsv", "thresholds.tsv", "null_fit.tsv", "false_calls.tsv",
            "false_events.tsv", "regions.tsv", "summary.tsv", "result.rds", "params.yaml", "NOTES.md", "scores.tsv.gz")
   expect_true(all(file.exists(file.path(out, want))))
@@ -139,17 +139,30 @@ test_that("write_scncall writes every file, read_scncall round-trips, scncall_su
   expect_true(res$params$normal$pool_loo)
   expect_setequal(names(res$params$normal), names(normal_arg_defaults()))
   expect_true(any(grepl("## Summary", readLines(file.path(out, "NOTES.md")))))
-  back = read_scncall(out)
-  expect_s3_class(back, "scncall")
+  back = read_scphasedcn(out)
+  expect_s3_class(back, "scphasedcn")
   expect_equal(back$calls, res$calls)
   expect_equal(back$cells, res$cells)
   expect_equal(back$thresholds, res$thresholds)
   expect_equal(back$events, res$events)
   expect_null(back$scores); expect_null(back$features)
-  expect_equal(read_scncall(file.path(out, "result.rds"))$mode, "normal")
-  expect_error(read_scncall(tempfile()), "no result.rds")
+  expect_equal(read_scphasedcn(file.path(out, "result.rds"))$mode, "normal")
+  expect_error(read_scphasedcn(tempfile()), "no result.rds")
+  # a result.rds written under the working name (class "scncall") reads back as scphasedcn
+  old = readRDS(file.path(out, "result.rds")); class(old) = "scncall"
+  f_old = tempfile(fileext = ".rds"); saveRDS(old, f_old)
+  back_old = read_scphasedcn(f_old)
+  expect_s3_class(back_old, "scphasedcn")
+  expect_equal(back_old$calls, res$calls)
+  expect_output(print(old), "<scphasedcn> mode: normal")
+  out_old = file.path(tempdir(), "callscn_out_legacy")
+  unlink(out_old, recursive = TRUE)
+  write_scphasedcn(old, out_old)
+  expect_s3_class(readRDS(file.path(out_old, "result.rds")), "scphasedcn")
+  saveRDS(list(a = 1), f_old)
+  expect_error(read_scphasedcn(f_old), "not a scphasedcn object")
 
-  sm = scncall_summary(res)
+  sm = scphasedcn_summary(res)
   expect_equal(names(sm), c("section", "item", "value", "n", "note"))
   expect_true(all(c("cells", "calls", "false_calls", "false_events", "events") %in% sm$section))
   expect_equal(sm[item == "cells", value], nrow(res$cells))
@@ -199,21 +212,21 @@ test_that("tumour mode dispatches to the tumour mode", {
   cm = data.table(cell = s$scn$cells$cell, group = s$scn$cells$cell_type)
   res = call_scn(d, "tumour", cell_meta = cm, cells = cm$cell, sex = "male", groups = "group", verbose = FALSE,
                  centromeres = cs_centromeres(s$scn$bins))
-  expect_s3_class(res, "scncall")
+  expect_s3_class(res, "scphasedcn")
   expect_equal(res$mode, "tumour")
   expect_true(all(c("clone", "posterior") %in% names(res$cells)))
   # the tumour options of the run are kept in params (call_scn no longer replaces the caller's record)
   expect_identical(res$params$tumour, clone_defaults())
   expect_null(res$params$normal)
   out = file.path(tempdir(), "callscn_tum")
-  write_scncall(res, out)
+  write_scphasedcn(res, out)
   expect_true(all(file.exists(file.path(out, c("clones.tsv", "assignments.tsv", "clone_segments.tsv", "clone_profiles.tsv.gz",
                                                "reference_pool.txt", "cells.tsv", "calls.tsv", "result.rds")))))
   expect_equal(caller_params(file.path(out, "params.yaml")), res$params)
 })
 
 test_that("inst/scripts/call_scn.R --help exits 0 without data", {
-  script = system.file("scripts", "call_scn.R", package = "scncall")
+  script = system.file("scripts", "call_scn.R", package = "scphasedcn")
   expect_true(file.exists(script))
   rs = file.path(R.home("bin"), "Rscript")
   out = suppressWarnings(system2(rs, c(script, "--help"), stdout = TRUE, stderr = TRUE))
@@ -223,9 +236,9 @@ test_that("inst/scripts/call_scn.R --help exits 0 without data", {
 })
 
 test_that("call_scn.R runs on --dir / --out alone, without a sample yaml", {
-  # the script loads the installed package: run it under R CMD check (or SCNCALL_TEST_CLI=true after an install)
-  skip_if_not(testthat::is_checking() || isTRUE(as.logical(Sys.getenv("SCNCALL_TEST_CLI", "FALSE"))))
-  script = system.file("scripts", "call_scn.R", package = "scncall")
+  # the script loads the installed package: run it under R CMD check (or SCPHASEDCN_TEST_CLI=true after an install)
+  skip_if_not(testthat::is_checking() || isTRUE(as.logical(Sys.getenv("SCPHASEDCN_TEST_CLI", "FALSE"))))
+  script = system.file("scripts", "call_scn.R", package = "scphasedcn")
   rs = file.path(R.home("bin"), "Rscript")
   d = sim_dir("sim_norm_f")
   cen = file.path(tempdir(), "cli_centromeres.tsv")
@@ -238,13 +251,19 @@ test_that("call_scn.R runs on --dir / --out alone, without a sample yaml", {
   expect_true(all(file.exists(file.path(out, c("cells.tsv", "calls.tsv", "params.yaml", "NOTES.md")))))
   # the same calls as the R API
   api = file.path(tempdir(), "callscn_cli_api")
-  write_scncall(norm_result(), api)
+  write_scphasedcn(norm_result(), api)
   for (f in c("calls.tsv", "cells.tsv", "thresholds.tsv"))
     expect_identical(readLines(file.path(out, f)), readLines(file.path(api, f)), info = f)
   # no --out and no sample yaml: a clear error
   log2 = suppressWarnings(system2(rs, c(script, "--dir", d, "--sex", "female"), stdout = TRUE, stderr = TRUE))
   expect_false(is.null(attr(log2, "status")))
   expect_true(any(grepl("give --out", log2)))
+  # without --config the sample yaml comes from SCPHASEDCN_SAMPLE_CONFIG
+  missing_yaml = file.path(tempdir(), "no_such_sample.yaml")
+  log3 = suppressWarnings(system2(rs, c(script, "--sample", "s1"), stdout = TRUE, stderr = TRUE,
+                                  env = paste0("SCPHASEDCN_SAMPLE_CONFIG=", missing_yaml)))
+  expect_false(is.null(attr(log3, "status")))
+  expect_true(any(grepl("sample yaml not found: .*no_such_sample.yaml", log3)))
 })
 
 test_that("make_cell_meta builds the cell metadata from cells_qc and user labels", {

@@ -3,14 +3,14 @@
 #       log-likelihood primitives (depth location shift under a Student-t or
 #       Gaussian null; oriented beta-binomial allele LLR vs 1:1), the null fits
 #       (location-scale t per class x stratum; beta-binomial rho), schema
-#       validators for the tables the caller modules exchange, the `scncall`
+#       validators for the tables the caller modules exchange, the `scphasedcn`
 #       result object and the tile naming rule.
 # Why: the feature step (features.R), the scorer (caller.R), the tumour mode (clones_*.R) and the
 #      pipeline (call_scn.R) share these definitions so that every part scores, thresholds and names
 #      regions the same way. The primitives are tested for exact parity with an independent reference
 #      implementation of the scorer in the tests (tests/testthat/helper-refscorer.R).
-# Inputs: vectors / data.tables (schemas in vignette("scncall-outputs", package = "scncall")).
-# Outputs: vectors, data.tables, `scncall` objects.
+# Inputs: vectors / data.tables (schemas in vignette("scphasedcn-outputs", package = "scphasedcn")).
+# Outputs: vectors, data.tables, `scphasedcn` objects.
 
 utils::globalVariables(c("z", "t_m", "t_s", "t_df", "snp1", "rho", "n_rows", "nA_", "n_", "ok_", "weight", "stat", "stat_min"))
 
@@ -317,7 +317,7 @@ check_schema = function(x, what, allowed = list()) {
 #' returns its input invisibly. Extra columns are allowed. Types: character
 #' (factors are rejected), numeric (integer or double), integer (integer or
 #' whole-number double), logical; an all-NA column passes any type. Schemas
-#' are listed in `vignette("scncall-outputs", package = "scncall")`.
+#' are listed in `vignette("scphasedcn-outputs", package = "scphasedcn")`.
 #' @param x table to check
 #' @return `x`, invisibly
 #' @name check_tables
@@ -381,7 +381,7 @@ check_segments = function(x) {
 
 #' The caller's result object
 #'
-#' An S3 list of class `scncall` holding everything one run of the caller
+#' An S3 list of class `scphasedcn` holding everything one run of the caller
 #' produces. Components that are not NULL are validated with the matching
 #' `check_*` function.
 #' @param mode "normal" (normal tissue: per-cell calls, pooled small events)
@@ -402,16 +402,16 @@ check_segments = function(x) {
 #' @param null_fit null fits (depth t parameters, allelic rho)
 #' @param params parameter list ([caller_defaults()])
 #' @param notes character vector of run notes
-#' @return object of class `scncall`
+#' @return object of class `scphasedcn`
 #' @export
-new_scncall = function(mode, cells, regions, features = NULL, scores = NULL, thresholds = NULL, calls = NULL,
+new_scphasedcn = function(mode, cells, regions, features = NULL, scores = NULL, thresholds = NULL, calls = NULL,
                        events = NULL, pools = NULL, clones = NULL, assignments = NULL, segments = NULL,
                        profiles = NULL, null_fit = NULL, params = caller_defaults(), notes = character()) {
   mode = match.arg(mode, c("normal", "tumour"))
   if (is.character(cells)) cells = data.table(cell = cells)
-  if (!is.data.frame(cells) || !"cell" %in% names(cells)) stop("new_scncall: `cells` must be a character vector or a table with a `cell` column")
+  if (!is.data.frame(cells) || !"cell" %in% names(cells)) stop("new_scphasedcn: `cells` must be a character vector or a table with a `cell` column")
   cells = as.data.table(cells)
-  if (anyDuplicated(cells$cell)) stop("new_scncall: duplicated cells")
+  if (anyDuplicated(cells$cell)) stop("new_scphasedcn: duplicated cells")
   check_regions(regions)
   if (!is.null(features)) check_features(features)
   if (!is.null(thresholds)) check_thresholds(thresholds)
@@ -421,15 +421,15 @@ new_scncall = function(mode, cells, regions, features = NULL, scores = NULL, thr
                  thresholds = thresholds, calls = calls, events = events, pools = pools, clones = clones,
                  assignments = assignments, segments = segments, profiles = profiles, null_fit = null_fit,
                  params = params, notes = as.character(notes)),
-            class = "scncall")
+            class = "scphasedcn")
 }
 
 #' @export
-print.scncall = function(x, ...) {
+print.scphasedcn = function(x, ...) {
   n_clones = if (is.null(x$clones)) 0L else if (is.data.frame(x$clones)) {
     if ("clone" %in% names(x$clones)) uniqueN(x$clones$clone) else nrow(x$clones)
   } else length(x$clones)
-  cat(sprintf("<scncall> mode: %s\n", x$mode))
+  cat(sprintf("<scphasedcn> mode: %s\n", x$mode))
   cat(sprintf("  cells: %d\n", nrow(x$cells)))
   cat(sprintf("  regions: %d\n", nrow(x$regions)))
   if (is.null(x$calls)) cat("  calls: none\n") else
@@ -437,6 +437,13 @@ print.scncall = function(x, ...) {
                 sum(x$calls$called, na.rm = TRUE), sum(x$calls$called & x$calls$reportable, na.rm = TRUE)))
   cat(sprintf("  clones: %d\n", n_clones))
   if (length(x$notes)) cat(sprintf("  notes: %d\n", length(x$notes)))
+  invisible(x)
+}
+
+# objects of the working-name class "scncall" (0.1.0-pre builds, e.g. a result.rds loaded with readRDS()) print the same
+#' @export
+print.scncall = function(x, ...) {
+  print.scphasedcn(x, ...)
   invisible(x)
 }
 

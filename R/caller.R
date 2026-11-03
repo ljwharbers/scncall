@@ -11,10 +11,10 @@
 #      thresholds, calls and pooled scores are tested against an independent reference implementation
 #      (tests/testthat/helper-refscorer.R); the tumour state set adds attenuated 1:0 / 2:0, allele-specific gains
 #      and amplifications.
-# Inputs: features long table (vignette("scncall-outputs", package = "scncall")) or equivalent cell x region
+# Inputs: features long table (vignette("scphasedcn-outputs", package = "scphasedcn")) or equivalent cell x region
 #         tables.
 # Outputs: scored tables, thresholds / calls tables (check_thresholds, check_calls), events,
-#          pools, `scncall` objects (mode normal).
+#          pools, `scphasedcn` objects (mode normal).
 
 utils::globalVariables(c("row_id", "shift", "fold", "is_null", "null_cell", "null_region", "sd_class",
                          "stratum", "n_hap", "z", "sd_null", "origin", "call_s_comb", "n_calls", "ev",
@@ -1425,7 +1425,7 @@ call_pools = function(d, pools, thr, policy = call_policy("normal"), states = ca
 #' default) adds a per-region tail factor to the pooled region scale ([pool_scale()]), cross-fitted with
 #' `params$pool_tail_xfit` ([pooled_thresholds()]). Removed options stop with
 #' an error: `calib` "region" / "region_votes" / "votes_cont", `calib_rho` "cell" / "chrom_cell".
-#' @param feat features long table (`vignette("scncall-outputs", package = "scncall")`)
+#' @param feat features long table (`vignette("scphasedcn-outputs", package = "scphasedcn")`)
 #' @param params [caller_defaults()]
 #' @param cell_meta optional table `cell` (+ `cell_type`) overriding the features' cell types
 #' @param multiplets cells flagged as multiplets (never null cells, never pooled)
@@ -1445,7 +1445,7 @@ call_pools = function(d, pools, thr, policy = call_policy("normal"), states = ca
 #'   same construction) before the per-class pooled thresholds
 #' @param null_chroms chromosomes whose rows can be null rows (default the autosomes, the chromosomes
 #'   [select_null_cells()] checks); NULL = every `null_region`
-#' @return `scncall` (mode normal) with `scores`, `thresholds` (column `level`:
+#' @return `scphasedcn` (mode normal) with `scores`, `thresholds` (column `level`:
 #'   cell, pool_type, pool_knn), `calls` (cell and pool level; `resolved` for gains changed by
 #'   [resolve_nested()]), `events`, `pools`, `null_fit = list(tpar, rho, null_cells, selection, pool_scale, sex,
 #'   vote_bins, rho_chrom)` (`vote_bins`: the [vote_bins()] table with `params$calib = "votes"`; `rho_chrom`: the
@@ -1573,7 +1573,7 @@ caller_normal = function(feat, params = caller_defaults(), cell_meta = NULL, mul
   events = consolidate_calls(all_calls, regions)
   cells = d[, .(cell_type = cell_type[1], stratum = stratum[1], fold = fold[1], null_cell = null_cell[1]), by = cell]
   cells[, multiplet := cell %in% multiplets]
-  new_scncall("normal", cells = cells, regions = regions, scores = sc,
+  new_scphasedcn("normal", cells = cells, regions = regions, scores = sc,
               thresholds = rbindlist(c(list(thr), pthr), fill = TRUE), calls = all_calls, events = events,
               pools = rbindlist(lapply(names(pools), function(k) pools[[k]][, kind := k]), fill = TRUE),
               null_fit = list(tpar = tpar, rho = rho, null_cells = cells[null_cell == TRUE, cell], selection = sel,
