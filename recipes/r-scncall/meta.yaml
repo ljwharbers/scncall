@@ -1,4 +1,4 @@
-# Draft bioconda recipe (submit to bioconda/bioconda-recipes after the v0.1.0 release; fill in sha256 of the tarball)
+# Bioconda recipe for v0.1.0 (submit to bioconda/bioconda-recipes once the repository is public; sha256 = GitHub's v0.1.0 tarball)
 {% set version = "0.1.0" %}
 
 package:
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://github.com/ljwharbers/scncall/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: REPLACE_WITH_SHA256
+  sha256: bc91f503085a3811505ca89a967796ead2cd6a7b3fd9907947f395935139c84e
 
 build:
   noarch: generic
