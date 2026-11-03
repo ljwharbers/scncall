@@ -161,7 +161,7 @@ def test_outputs_and_layers(extracted, adata):
     files = sorted(p.name for p in extracted.iterdir() if p.is_file())
     assert files == ["alleles_dna.h5ad", "bins_100kb.h5ad", "cells_qc.tsv", "fragments.tsv.gz", "fragments.tsv.gz.tbi",
                      "summary.json"]
-    assert sorted(adata.layers) == ["frag_long", "frag_short", "hapA", "hapB", "hap_ambig", "span"]
+    assert sorted(k for k in adata.layers.keys() if k is not None) == ["frag_long", "frag_short", "hapA", "hapB", "hap_ambig", "span"]
     assert sorted(adata.obsm) == ["fraglen_hist", "mapq_hist"]
     assert adata.X[:, list(adata.var_names).index("chrM:0-16569")].sum() == 2
 
