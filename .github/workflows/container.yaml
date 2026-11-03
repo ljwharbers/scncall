@@ -26,7 +26,8 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/scncall
           tags: |
-            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
             type=sha
       - name: build
         uses: docker/build-push-action@v6

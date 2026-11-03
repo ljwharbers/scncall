@@ -34,6 +34,9 @@ pip install ./python && R CMD INSTALL .
 bash tools/smoke_test.sh                                            # end-to-end check on simulated data
 ```
 
+To reproduce results exactly, use the container of the release: per-cell calls are identical across
+installations, but the chromatin-kNN pooled calls depend slightly on the BLAS and `irlba` versions.
+
 From source into existing installations: `pip install ./python` (Python >= 3.10) and, in R (>= 4.2),
 `install.packages("pak"); pak::pak("ljwharbers/scncall")` (Bioconductor dependencies: rhdf5, Rsamtools). A `tabix` on
 the PATH speeds up reading the fragment table.
