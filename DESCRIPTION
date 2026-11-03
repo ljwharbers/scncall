@@ -1,0 +1,48 @@
+Package: scncall
+Type: Package
+Title: Single-Cell Copy-Number Calling from Long-Read Single-Cell DNA Data
+Version: 0.1.0
+Authors@R: c(person("Luuk", "Harbers", email = "luuk.harbers@vib.be", role = c("aut", "cre")))
+Description: Calls copy-number alterations in single cells from SPLONGGET
+    data (single-cell long-read DNA sequencing with 10x Multiome barcodes and
+    Oxford Nanopore reads). Two channels are combined per cell and region:
+    read depth (normalised against a cell-type-matched or model-based
+    reference, scored against a Student-t null) and read-phased alleles
+    (molecules vote for a haplotype; beta-binomial likelihood ratios of
+    allelic imbalance). A normal-tissue mode calibrates its thresholds on
+    self-selected null cells and reports per-cell and pooled calls; a tumour
+    mode discovers clones, fits clone copy-number states and reassigns cells
+    by likelihood. Inputs are the per-cell bin matrices and fragment tables
+    written by the companion Python extractor 'splongcn'; outputs are flat
+    tables, a result object and an export for MEDICC2 trees.
+License: MIT + file LICENSE
+URL: https://github.com/ljwharbers/scncall
+BugReports: https://github.com/ljwharbers/scncall/issues
+Encoding: UTF-8
+Depends: R (>= 4.2)
+Imports:
+    data.table,
+    FNN,
+    GenomicRanges,
+    IRanges,
+    irlba,
+    MASS,
+    Matrix,
+    methods,
+    rhdf5,
+    robustbase,
+    Rsamtools,
+    splines,
+    stats,
+    utils,
+    yaml
+Suggests:
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+VignetteBuilder: knitr
+biocViews: Software, SingleCell, CopyNumberVariation, Sequencing
+RoxygenNote: 7.3.3
+Roxygen: list(markdown = TRUE)
+Config/testthat/edition: 3
+LazyData: false

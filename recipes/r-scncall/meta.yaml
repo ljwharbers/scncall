@@ -1,0 +1,61 @@
+# Draft bioconda recipe (submit to bioconda/bioconda-recipes after the v0.1.0 release; fill in sha256 of the tarball)
+{% set version = "0.1.0" %}
+
+package:
+  name: r-scncall
+  version: {{ version }}
+
+source:
+  url: https://github.com/ljwharbers/scncall/archive/refs/tags/v{{ version }}.tar.gz
+  sha256: REPLACE_WITH_SHA256
+
+build:
+  noarch: generic
+  number: 0
+  rpaths:
+    - lib/R/lib/
+    - lib/
+  script: R CMD INSTALL --build . && install -m 0755 inst/scripts/call_scn.R $PREFIX/bin/call_scn.R
+  run_exports:
+    - {{ pin_subpackage("r-scncall", max_pin="x.x") }}
+
+requirements:
+  host:
+    - r-base >=4.2
+    - r-data.table
+    - r-fnn
+    - r-irlba
+    - r-mass
+    - r-matrix
+    - r-robustbase
+    - r-yaml
+    - bioconductor-genomicranges
+    - bioconductor-iranges
+    - bioconductor-rhdf5
+    - bioconductor-rsamtools
+  run:
+    - r-base >=4.2
+    - r-data.table
+    - r-fnn
+    - r-irlba
+    - r-mass
+    - r-matrix
+    - r-robustbase
+    - r-yaml
+    - bioconductor-genomicranges
+    - bioconductor-iranges
+    - bioconductor-rhdf5
+    - bioconductor-rsamtools
+    - htslib
+    - splongcn ={{ version }}
+
+test:
+  commands:
+    - $R -e "library('scncall')"
+    - call_scn.R --help
+
+about:
+  home: https://github.com/ljwharbers/scncall
+  license: MIT
+  license_file: LICENSE.md
+  summary: Single-cell copy-number calling from SPLONGGET long-read single-cell DNA data (depth + read-phased alleles)

@@ -1,0 +1,56 @@
+# Caller parameters (read by scncall::caller_params()). One key per caller_defaults() entry, with
+# the default value; edit a copy and pass it with `--caller-config` (inst/scripts/call_scn.R) or
+# caller_params(file = ...). Sample keys (paths, sex, events) stay in the sample yaml (inst/extdata/sample_template.yaml). The `normal:` and
+# `tumour:` blocks at the end are the arguments of the normal-tissue caller (caller_normal()) and the tumour-mode
+# options (clone_defaults()); keys left out keep their default. The params.yaml of a run records every value used.
+# Plain numbers only (no 5e6: the yaml package reads it as a string); named vectors are block maps.
+null_q: 0.999               # threshold quantile of the null score (type 7; calls need score > threshold): 1 false call per 1,000 null cell-regions
+eps: 0.02                   # allele error floor of the beta-binomial (1:0 state at f = 1 - eps)
+mol_gap: 2000               # fragments of one cell closer than this (bp) are one molecule (one vote)
+sd_floor: 0.05              # floor of the per-cell null SD of the window log2 ratio
+strata_breaks: [20000, 50000]                 # depth strata on clean fragments per cell
+strata_labels: ["<20k", "20-50k", ">=50k"]    # stratum labels (length(strata_breaks) + 1)
+shifts:                     # log2 depth shift of one-copy states (calibrated on depth-only spike-ins in normal tissue)
+  loss: -0.98
+  gain: 0.57
+k_amp: 0.975                # depth shift of cn >= 4 is k_amp * log2(cn / 2) (uncalibrated)
+f_att: [0.85, 0.90, 0.95, 0.98]   # attenuated major-haplotype fractions of 1:0 / 2:0 states (tumour)
+tile_sizes:                 # tile region classes (bp)
+  5Mb: 5000000
+  10Mb: 10000000
+  20Mb: 20000000
+  50Mb: 50000000
+n_folds: 4                  # cross-validation folds of the null thresholds
+n_pool: 20                  # cells per pool (random pools within cell type, kNN pools)
+chrx_centromere: [58605580, 62412542]          # chrX centromere (hg38 bp) for female chrX arms
+acrocentric_p: ["chr13p", "chr14p", "chr15p", "chr21p", "chr22p"]   # arms without unique sequence; never regions
+min_null_rows: 5000         # fewer null rows in a class x stratum -> class-wide (pooled) threshold
+tabix: ""                   # tabix binary; "" = the tabix on the PATH (none: R fallback)
+seed: 1                     # RNG seed (folds, pools, null-cell selection)
+calib: "class"              # normal-mode per-cell calibration: "class" or "votes" (opt-in: thresholds per n_hap bin)
+vote_bins: 4                # maximal n_hap bins per class x stratum (votes calibration; fewer when a bin would have < min_null_rows null rows)
+calib_rho: "global"         # allelic overdispersion: "global" (one rho, null arm rows) or "chrom" (opt-in: per chromosome, shrunk to the global)
+rho_chrom_k: 100            # shrinkage pseudo-count of the per-chromosome rho (null arm rows)
+mask_allelic: false         # normal mode: leave the votes of allelically overdispersed 5 Mb tiles (null rho outliers) out of the allele features
+mask_rho_mad: 2             # mask threshold: log tile rho above the genome median by this many MADs
+mask_min_votes: 3           # tiles with fewer mean votes per null row are not assessed
+pool_sex_thr: true          # males: own pooled threshold group for chrX / chrY (class threshold as fallback)
+pool_tail_q: 0.99           # pooled per-region tail calibration: quantile of the standardised null pools vs the class (0 = off)
+pool_tail_k: 30             # shrinkage pseudo-count of the pooled tail factor (effective pools)
+pool_tail_xfit: true        # cross-fit the pooled tail: region scale and threshold from pools of disjoint halves of the null cells
+normal:                     # normal mode: caller_normal() arguments (CLI --n-draws overrides n_draws)
+  n_draws: 20000            # null pool-regions per class for the pooled thresholds
+  depth_model: "t"          # depth null: "t" (Student-t per class x stratum) or "gauss"
+  resolve_gains: true       # per-cell chromosome gains need depth support and lose to a stronger nested loss / CN-LOH
+  pool_loo: true            # pools are called on the leave-one-out robust score s_rob
+  pool_standardize: true    # pooled best LLR standardised per region by the null pools of the same construction
+tumour:                     # tumour mode: clone_defaults() options (CLI --confirm-null / --split-pass override)
+  confirm_null: "matched"   # per-cell confirmation null: "matched" (per clone hypothesis) or "generic"
+  ref_null: "none"          # confirmation rho refitted on the clean reference pool: "none" or "rho"
+  split_pass: false         # final clone split pass: false or "disagree" (members disagree with the clone state)
+  em_rounds: 2              # hard-EM assignment rounds
+  checkpoint: ""            # resume cache (.rds) of the global discovery and first round; "" = off
+  min_excess: 0.5           # clone segments: an imbalanced run needs its pooled oriented fraction above 0.5 by this share of the expected excess (0 = off)
+  max_contra: 0.1           # clone segments: a gain / loss whose mean log2 has the wrong sign by more than this becomes copy-neutral (Inf = off)
+  bal_frac: 0.75            # clone segments: a balanced non-neutral run (2:2) needs this share of its expected log2 shift (0 = off) ...
+  min_bal_len: 20000000     # ... and at least this length (bp), else 1:1

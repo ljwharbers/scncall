@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "splongcn"
+version = "0.1.0"
+description = "Extraction layer of scncall: per-cell depth, read-phased alleles and fragment tables from SPLONGGET single-cell long-read DNA BAMs"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Luuk Harbers", email = "luuk.harbers@vib.be" }]
+requires-python = ">=3.10"
+dependencies = ["pysam>=0.22", "numpy>=1.24", "scipy>=1.10", "pandas>=2.0", "h5py>=3.8", "anndata>=0.10", "pyyaml>=6"]
+keywords = ["single-cell", "copy number", "long reads", "nanopore", "bioinformatics"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+
+[project.urls]
+Homepage = "https://github.com/ljwharbers/scncall"
+Issues = "https://github.com/ljwharbers/scncall/issues"
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[project.scripts]
+splongcn = "splongcn.cli:main"
+splongcn-extract = "splongcn.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+splongcn = ["resources/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "tests"]

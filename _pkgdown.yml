@@ -1,0 +1,13 @@
+url: https://ljwharbers.github.io/scncall/
+template:
+  bootstrap: 5
+navbar:
+  structure:
+    left: [intro, reference, articles, news]
+    right: [search, github]
+articles:
+  - title: Using scncall
+    navbar: ~
+    contents:
+      - scncall-inputs
+      - scncall-outputs

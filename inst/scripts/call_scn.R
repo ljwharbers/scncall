@@ -1,0 +1,136 @@
+#!/usr/bin/env Rscript
+# call_scn.R
+# What: command-line front end of the copy-number caller: scncall::call_scn() on one extraction directory (written by
+#       `splongcn`), then write_scncall() into the output directory.
+# Why: one command per sample; the R API stays the single place where the caller is defined.
+# Usage: Rscript call_scn.R --dir <extract dir> --out <dir> --sex female|male [--mode normal|tumour] [options]
+#        or, with a sample yaml (see system.file("extdata", "sample_template.yaml", package = "scncall")):
+#        Rscript call_scn.R --config <sample yaml> --sample <key> [--tag <tag>] [options]
+#        Caller parameters: --caller-config (default the package's caller.yaml, incl. its normal: / tumour: blocks);
+#        --seed, --n-draws, --confirm-null and --split-pass override single values of it.
+#        Lists (--cells, --null-cells, --multiplets given inline, --events) use ';' as separator (so that values
+#        survive tools that split at commas, e.g. sbatch --export). RLIB (env) puts a package library first on the library path.
+#        The script's path: system.file("scripts", "call_scn.R", package = "scncall").
+# Inputs: the extraction directory (bins_100kb.h5ad, fragments.tsv.gz + .tbi, cells_qc.tsv), optional cell metadata,
+#         an optional sample yaml and caller yaml.
+# Outputs: <out>/ cells.tsv, calls.tsv, pooled_calls.tsv, events.tsv, thresholds.tsv, null_fit.tsv, false_calls.tsv,
+#          (tumour: clones.tsv, assignments.tsv, clone_segments.tsv, clone_profiles.tsv.gz, reference_pool.txt),
+#          result.rds, params.yaml, summary.tsv, NOTES.md.
+
+defaults = list(sample = "", mode = "", dir = "", sex = "", events = "", config = "", caller_config = "", cell_meta = "",
+                cells = "", null_cells = "auto", multiplets = "", groups = "", control_regions = "", features = "",
+                centromeres = "", out = "", tag = "default", cores = 8, write_scores = FALSE, write_features = FALSE,
+                no_embedding = FALSE, seed = "", n_draws = "", confirm_null = "", split_pass = "")
+usage = paste(
+  "Single-cell copy-number caller (scncall::call_scn) on one sample.",
+  "",
+  "Inputs: either --dir + --out (+ --sex), or --config + --sample.",
+  "  --dir <path>            extraction directory written by `splongcn` (bins_100kb.h5ad, fragments.tsv.gz + .tbi,",
+  "                          cells_qc.tsv)",
+  "  --out <dir>             output directory (with --config / --sample: default <outputs.root>/<sample>/caller/<tag>)",
+  "  --sex female|male       sample sex (required unless the sample yaml gives it)",
+  "  --config <yaml>         sample yaml (layout: system.file('extdata', 'sample_template.yaml', package = 'scncall');",
+  "                          default: the SCNCALL_SAMPLE_CONFIG environment variable)",
+  "  --sample <key>          sample of the --config yaml (extraction dir, sex, events, type)",
+  "  --mode normal|tumour    default: the sample's `type` (normal when missing)",
+  "  --events <list>         known events, name=region;name=region (e.g. chr5_gain=chr5;20q_gain=chr20:28000000-)",
+  "  --centromeres <tsv>     centromere table (default: the sample yaml's reference.centromeres, else the hg38 table",
+  "                          shipped with the package)",
+  "  --caller-config <yaml>  caller parameters (default: the package's caller.yaml; its normal: / tumour: blocks are",
+  "                          the caller_normal() arguments / tumour-mode options clone_defaults())",
+  "  --cell-meta <tsv>       cell + optional qc_pass/cell_type/flat/fold/group/stratum/n_frag (see make_cell_meta();",
+  "                          cells with qc_pass FALSE are dropped; cell_type 'unknown' = no type)",
+  "  --cells <file|list>     cells to call (default: QC pass, and in cell-meta when given)",
+  "  --null-cells <x>        auto | features | select | a file or ';' list of null cells",
+  "  --multiplets <x>        file (one cell per line, or a table with prob / multiplet / clean_singlet) or ';' list",
+  "  --groups <column>       tumour mode: cell-meta column of the pseudobulk orientation groups (e.g. a spatial region)",
+  "  --control-regions <tsv> tumour mode: control regions table",
+  "  --features <rds>        precomputed scn_features (skips the feature step)",
+  "  --tag <tag>             output tag (with --config / --sample)",
+  "  --cores <n>             data.table threads",
+  "  --write-scores          also write scores.tsv.gz (large)",
+  "  --write-features        also write features.tsv.gz (large)",
+  "  --no-embedding          no chromatin embedding (no kNN pools)",
+  "  --seed <n>              RNG seed (overrides the caller config's seed)",
+  "  --n-draws <n>           normal mode: null pool-regions per class for the pooled thresholds (overrides normal: n_draws)",
+  "  --confirm-null <x>      tumour mode: matched | generic per-cell confirmation null (overrides tumour: confirm_null)",
+  "  --split-pass <x>        tumour mode: FALSE | disagree final clone split pass (overrides tumour: split_pass)",
+  sep = "\n")
+if (any(commandArgs(trailingOnly = TRUE) %in% c("-h", "--help"))) {
+  cat(usage, "\n\noptions (defaults):\n", sep = "")
+  for (k in names(defaults)) cat(sprintf("  --%s (default: %s)\n", gsub("_", "-", k), paste(format(defaults[[k]]), collapse = ",")))
+  quit(save = "no", status = 0)
+}
+
+RLIB = Sys.getenv("RLIB")
+if (nzchar(RLIB)) .libPaths(c(RLIB, .libPaths()))
+suppressPackageStartupMessages({ library(scncall); library(data.table) })
+fail = function(...) { message("call_scn.R: ", ...); quit(save = "no", status = 1) }
+a = cli_args(defaults = defaults, usage = usage)
+unknown = setdiff(names(a), names(defaults))
+if (length(unknown)) fail("unknown option(s) ", paste0("--", gsub("_", "-", unknown), collapse = ", "), "; see --help")
+t0 = Sys.time()
+setDTthreads(as.integer(a$cores))
+split_list = function(x) if (!nzchar(x)) NULL else if (file.exists(x)) x else trimws(strsplit(x, ";", fixed = TRUE)[[1]])
+
+# sample yaml: --config, else the SCNCALL_SAMPLE_CONFIG environment variable (a default yaml for batch wrappers)
+cfg = NULL
+cfg_file = if (nzchar(a$config)) a$config else Sys.getenv("SCNCALL_SAMPLE_CONFIG")
+if (nzchar(cfg_file)) {
+  if (!file.exists(cfg_file)) fail("sample yaml not found: ", cfg_file)
+  cfg = read_config(cfg_file)
+} else if (nzchar(a$sample)) fail("--sample needs --config <sample yaml>")
+s = if (nzchar(a$sample)) cli_sample(cfg, a$sample) else list(name = "sample")
+dir = if (nzchar(a$dir)) a$dir else s$dir
+if (is.null(dir) || !nzchar(dir)) fail("give --dir <extraction dir> (or --config + --sample)")
+if (!nzchar(a$features) && !file.exists(file.path(dir, "bins_100kb.h5ad"))) fail("no bins_100kb.h5ad in ", dir)
+mode = if (nzchar(a$mode)) a$mode else if (identical(s$type, "tumour")) "tumour" else "normal"
+if (!mode %in% c("normal", "tumour")) fail("--mode must be normal or tumour")
+sex = if (nzchar(a$sex)) a$sex else s$sex
+events = if (nzchar(a$events)) {
+  kv = strsplit(split_list(a$events), "=", fixed = TRUE)
+  setNames(vapply(kv, `[`, "", 2), vapply(kv, `[`, "", 1))
+} else if (!is.null(s$events)) unlist(s$events) else NULL
+cen = if (nzchar(a$centromeres)) a$centromeres else cfg$reference$centromeres
+if (!is.null(cen) && !file.exists(cen)) fail("centromere table not found: ", cen)
+params = caller_params(if (nzchar(a$caller_config)) a$caller_config else NULL)
+if (nzchar(a$seed)) params$seed = as.numeric(a$seed)
+# caller arguments from the flags (over the caller config's normal: / tumour: blocks, merged in call_scn)
+caller_args = if (mode == "normal") {
+  if (nzchar(a$n_draws)) list(n_draws = as.numeric(a$n_draws)) else list()
+} else {
+  o = list()
+  if (nzchar(a$confirm_null)) o$confirm_null = a$confirm_null
+  if (nzchar(a$split_pass)) o$split_pass = if (toupper(a$split_pass) %in% c("TRUE", "FALSE")) as.logical(a$split_pass) else a$split_pass
+  if (length(o)) list(opts = o) else list()
+}
+out = if (nzchar(a$out)) a$out else if (nzchar(a$sample) && length(cfg$outputs$root)) {
+  file.path(cfg$outputs$root, s$name, "caller", a$tag)
+} else fail("give --out <dir>")
+
+cm = NULL
+if (nzchar(a$cell_meta)) {
+  cm = fread(a$cell_meta)
+  if (!"cell" %in% names(cm)) fail("--cell-meta needs a `cell` column")
+  if ("qc_pass" %in% names(cm)) cm = cm[qc_pass %in% TRUE]
+  if ("cell_type" %in% names(cm)) cm[cell_type %in% c("unknown", ""), cell_type := NA]
+  if ("stratum" %in% names(cm)) cm[, stratum := as.character(stratum)]
+  keep = intersect(c("cell", "cell_type", "flat", "fold", "group", "stratum", "n_frag", a$groups), names(cm))
+  cm = cm[, keep, with = FALSE]
+}
+cells = split_list(a$cells)
+if (is.null(cells) && !is.null(cm) && !nzchar(a$features)) cells = cm$cell
+nc = a$null_cells
+null_cells = if (nc %in% c("auto", "features", "select")) nc else split_list(nc)
+mult = split_list(a$multiplets)
+ctrl = if (nzchar(a$control_regions)) fread(a$control_regions) else NULL
+cli_log("call_scn: sample ", s$name, ", mode ", mode, ", dir ", dir, ", out ", out)
+
+res = call_scn(dir, mode = mode, cell_meta = cm, cells = cells, sex = sex, events = events, null_cells = null_cells,
+               multiplets = mult, control_regions = ctrl, groups = if (nzchar(a$groups)) a$groups else NULL, params = params,
+               features = if (nzchar(a$features)) a$features else NULL, embedding = !isTRUE(a$no_embedding),
+               keep_scores = isTRUE(a$write_scores), caller_args = caller_args, centromeres = cen)
+print(res)
+files = write_scncall(res, out, write_scores = isTRUE(a$write_scores), write_features = isTRUE(a$write_features))
+print(scncall_summary(res))
+cli_log("wrote ", length(files), " files to ", out, " (", round(as.numeric(difftime(Sys.time(), t0, units = "mins")), 1), " min)")

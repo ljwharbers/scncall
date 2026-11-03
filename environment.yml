@@ -1,0 +1,40 @@
+# Conda environment with everything scncall and splongcn need (R + Python + htslib tools).
+#   conda env create -f environment.yml        (or: micromamba create -f environment.yml)
+#   conda activate scncall
+#   pip install ./python && R CMD INSTALL .
+name: scncall
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  # R and the caller's dependencies
+  - r-base>=4.3
+  - r-data.table
+  - r-matrix
+  - r-mass
+  - r-robustbase
+  - r-irlba
+  - r-fnn
+  - r-yaml
+  - bioconductor-rhdf5
+  - bioconductor-rsamtools
+  - bioconductor-genomicranges
+  - bioconductor-iranges
+  - r-knitr
+  - r-rmarkdown
+  - r-testthat
+  # Python and the extractor's dependencies
+  - python>=3.10,<3.13
+  - pip
+  - pysam>=0.22
+  - numpy>=1.24
+  - scipy>=1.10
+  - pandas>=2.0
+  - h5py>=3.8
+  - anndata>=0.10
+  - pyyaml>=6
+  - pytest
+  # command-line tools (tabix for fast fragment reads; samtools / bcftools for the phasing recipe)
+  - htslib
+  - samtools
+  - bcftools

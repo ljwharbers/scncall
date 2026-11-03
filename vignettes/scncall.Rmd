@@ -1,0 +1,151 @@
+---
+title: "Getting started with scncall"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with scncall}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+data.table::setDTthreads(2)
+```
+
+scncall calls copy-number alterations in single cells from SPLONGGET data: single-cell long-read DNA sequencing in
+which every read carries a 10x Multiome cell barcode and is sequenced on Oxford Nanopore. Per cell and region it
+combines two channels:
+
+- **depth**: fragments per region against an expected count from a reference (cells of the same cell type in normal
+  tissue, a GC / mappability model in tumours), scored as a z against a Student-t null;
+- **read-phased alleles**: every molecule that covers a phased heterozygous SNP votes for one haplotype; allelic
+  imbalance is scored with beta-binomial likelihood ratios.
+
+Two modes:
+
+- **normal tissue** (`mode = "normal"`): rare, cell-private events. Thresholds come from null cells (cells the caller
+  selects as copy-number neutral, or that you give), cross-validated at 1 false call per 1,000 null cell-regions; cells
+  are also called in pools (random pools within a cell type, chromatin-kNN pools).
+- **tumour** (`mode = "tumour"`): clones. The caller discovers clones, fits their allele-specific copy-number states,
+  re-assigns every cell by likelihood and reports per-cell calls inherited from the clone or confirmed by the cell.
+
+## The workflow
+
+1. **Phase** heterozygous SNPs of the sample (e.g. Clair3 + longphase on the pooled BAM) and select them with
+   `splongcn select-hets`.
+2. **Extract** with the Python package `splongcn` (`splongcn run`): per-cell 100 kb bin counts, a fragment table with
+   the haplotype of every fragment, and per-cell QC.
+3. **Call** with `call_scn()` in R, or the command-line script shipped with the package.
+
+`vignette("scncall-inputs")` describes steps 1 and 2, the input files and the cell metadata;
+`vignette("scncall-outputs")` the result tables.
+
+## A run on simulated data
+
+The package simulates SPLONGGET-like data and writes it in the layout the extractor produces. Here: 120 cells of
+normal tissue (female) in three cell types, a few cells carrying private events (a chr1p loss, a chr8 gain), and one
+phase block per chromosome.
+
+```{r sim}
+library(scncall)
+library(data.table)
+ev = data.table(chrom = c("chr1", "chr8"), start = c(0, 0), end = c(24e6, NA),
+                cnA = c(1L, 2L), cnB = c(0L, 1L), type = "private")
+sim = simulate_scn(n_cells = 120, sex = "female", cell_types = c(epi = 0.4, fib = 0.35, imm = 0.25),
+                   depth = c(meanlog = log(15000), sdlog = 0.3), events = ev, private_frac = 0.08,
+                   multiplet_rate = 0, phase_block_mean = 1e9, switch_rate = 2e-6, seed = 7)
+dir = file.path(tempdir(), "extract")
+invisible(write_sim_dataset(sim, dir))
+list.files(dir)
+```
+
+The simulated genome is small (chr1, chr2, chr8, chr21, chr22, chrX), so the run gets a centromere table for it; on
+real hg38 data the default (`hg38_centromeres()`) applies.
+
+```{r centromeres}
+cen = sim$scn$bins[, .(cstart = 1, len = max(end)), by = chrom]
+cen = cen[, .(chrom, cstart, cen_left = 0.4 * len, cen_right = 0.4 * len, cend = len)]
+```
+
+The cell types are in the simulated `cells_qc.tsv`; on real data they come from your own annotation through
+`make_cell_meta()`.
+
+```{r call, message = FALSE}
+res = call_scn(dir, mode = "normal", sex = "female", centromeres = cen, null_cells = "select", verbose = FALSE)
+res
+```
+
+Calls are per cell and region; `events` merges a cell's overlapping calls into events.
+
+```{r events}
+head(res$events[, .(cell, chrom, start, end, state, top_region, score)])
+```
+
+Compare with the truth of the simulation (the cells carrying the chr1p loss):
+
+```{r truth}
+carriers = colMeans(sim$truth$cn[sim$scn$bins$chrom == "chr1" & sim$scn$bins$end <= 24e6, ]) < 1.5
+called = unique(res$events[chrom == "chr1" & state == "loss", cell])
+table(carrier = sim$scn$cells$cell %in% sim$scn$cells$cell[carriers], called = sim$scn$cells$cell %in% called)
+```
+
+Write all tables, the parameters and the run notes:
+
+```{r write}
+out = file.path(tempdir(), "caller")
+invisible(write_scncall(res, out))
+list.files(out)
+scncall_summary(res)
+```
+
+## From the command line
+
+The package ships a command-line front end; its path is
+
+```{r script}
+system.file("scripts", "call_scn.R", package = "scncall")
+```
+
+```bash
+CALL=$(Rscript -e 'cat(system.file("scripts", "call_scn.R", package = "scncall"))')
+Rscript $CALL --dir results/sample/extract --out results/sample/caller --sex female --mode normal \
+    --cell-meta cell_meta.tsv --null-cells select
+Rscript $CALL --dir results/tumour/extract --out results/tumour/caller --sex male --mode tumour \
+    --events "20q_gain=chr20:28000000-;3p_loss=chr3:1-90000000"
+Rscript $CALL --help
+```
+
+## Parameters
+
+`caller_params()` reads the parameter file shipped with the package (`inst/config/caller.yaml`, one key per
+`caller_defaults()` entry plus `normal:` / `tumour:` blocks). To change a value, copy the file, edit it and pass it
+with `--caller-config` (or `caller_params(file = ...)` in R). Every run writes the values it used to `params.yaml`,
+which reads back with `caller_params()`.
+
+```{r params}
+p = caller_params()
+p[c("null_q", "eps", "mol_gap", "strata_breaks")]
+```
+
+The defaults were calibrated on SPLONGGET normal-tissue and tumour samples: the one-copy depth shifts (`shifts`) on
+depth-only spike-ins into normal cells, `null_q` at 1 false call per 1,000 null cell-regions. The depth strata
+(`strata_breaks`, clean fragments per cell) separate cells whose power differs; with much deeper or shallower data,
+move them.
+
+## Tumour mode
+
+Tumour mode needs read-phased alleles (the allele votes drive the clone discovery). Phase blocks of longphase are not
+oriented between blocks; the caller orients them per clone. Optional inputs: cells known to be normal (`flat` in the
+cell metadata; the caller otherwise finds the normal clone itself), groups for the block orientation (`groups`, e.g.
+spatial regions), known events (`events`, reported as their own regions) and multiplet probabilities
+(`multiplets`).
+
+```{r tumour, eval = FALSE}
+res_t = call_scn("results/tumour/extract", mode = "tumour", sex = "male",
+                 events = c(`20q_gain` = "chr20:28000000-"))
+res_t$clones
+head(res_t$segments)
+```
+
+MEDICC2 trees of the clones: `medicc2_pieces()` and `medicc2_table()` write MEDICC2's input from the clone
+segments.
