@@ -1,7 +1,7 @@
 name: container
 
-# Builds the scncall image (R + Python + htslib) and pushes it to the GitHub container registry on tags (and on
-# manual runs). Apptainer users: apptainer pull docker://ghcr.io/<owner>/scncall:<tag>
+# Builds the scphasedcn image (R + Python + htslib) and pushes it to the GitHub container registry on tags (and on
+# manual runs). Apptainer users: apptainer pull docker://ghcr.io/<owner>/scphasedcn:<tag>
 on:
   push:
     tags: ["v*"]
@@ -24,7 +24,7 @@ jobs:
       - id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/scncall
+          images: ghcr.io/${{ github.repository_owner }}/scphasedcn
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -35,9 +35,9 @@ jobs:
           context: .
           file: containers/Dockerfile
           load: true
-          tags: scncall:test
+          tags: scphasedcn:test
       - name: smoke test (simulated data through the command line)
-        run: docker run --rm -v "$PWD/tools:/tools:ro" scncall:test bash /tools/smoke_test.sh /tmp/smoke
+        run: docker run --rm -v "$PWD/tools:/tools:ro" scphasedcn:test bash /tools/smoke_test.sh /tmp/smoke
       - name: push
         uses: docker/build-push-action@v6
         with:

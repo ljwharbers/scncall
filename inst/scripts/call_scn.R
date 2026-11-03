@@ -1,16 +1,16 @@
 #!/usr/bin/env Rscript
 # call_scn.R
-# What: command-line front end of the copy-number caller: scncall::call_scn() on one extraction directory (written by
-#       `splongcn`), then write_scncall() into the output directory.
+# What: command-line front end of the copy-number caller: scphasedcn::call_scn() on one extraction directory (written by
+#       `scphasedcn run`), then write_scphasedcn() into the output directory.
 # Why: one command per sample; the R API stays the single place where the caller is defined.
 # Usage: Rscript call_scn.R --dir <extract dir> --out <dir> --sex female|male [--mode normal|tumour] [options]
-#        or, with a sample yaml (see system.file("extdata", "sample_template.yaml", package = "scncall")):
+#        or, with a sample yaml (see system.file("extdata", "sample_template.yaml", package = "scphasedcn")):
 #        Rscript call_scn.R --config <sample yaml> --sample <key> [--tag <tag>] [options]
 #        Caller parameters: --caller-config (default the package's caller.yaml, incl. its normal: / tumour: blocks);
 #        --seed, --n-draws, --confirm-null and --split-pass override single values of it.
 #        Lists (--cells, --null-cells, --multiplets given inline, --events) use ';' as separator (so that values
 #        survive tools that split at commas, e.g. sbatch --export). RLIB (env) puts a package library first on the library path.
-#        The script's path: system.file("scripts", "call_scn.R", package = "scncall").
+#        The script's path: system.file("scripts", "call_scn.R", package = "scphasedcn").
 # Inputs: the extraction directory (bins_100kb.h5ad, fragments.tsv.gz + .tbi, cells_qc.tsv), optional cell metadata,
 #         an optional sample yaml and caller yaml.
 # Outputs: <out>/ cells.tsv, calls.tsv, pooled_calls.tsv, events.tsv, thresholds.tsv, null_fit.tsv, false_calls.tsv,
@@ -22,15 +22,15 @@ defaults = list(sample = "", mode = "", dir = "", sex = "", events = "", config 
                 centromeres = "", out = "", tag = "default", cores = 8, write_scores = FALSE, write_features = FALSE,
                 no_embedding = FALSE, seed = "", n_draws = "", confirm_null = "", split_pass = "")
 usage = paste(
-  "Single-cell copy-number caller (scncall::call_scn) on one sample.",
+  "Single-cell copy-number caller (scphasedcn::call_scn) on one sample.",
   "",
   "Inputs: either --dir + --out (+ --sex), or --config + --sample.",
-  "  --dir <path>            extraction directory written by `splongcn` (bins_100kb.h5ad, fragments.tsv.gz + .tbi,",
+  "  --dir <path>            extraction directory written by `scphasedcn run` (bins_100kb.h5ad, fragments.tsv.gz + .tbi,",
   "                          cells_qc.tsv)",
   "  --out <dir>             output directory (with --config / --sample: default <outputs.root>/<sample>/caller/<tag>)",
   "  --sex female|male       sample sex (required unless the sample yaml gives it)",
-  "  --config <yaml>         sample yaml (layout: system.file('extdata', 'sample_template.yaml', package = 'scncall');",
-  "                          default: the SCNCALL_SAMPLE_CONFIG environment variable)",
+  "  --config <yaml>         sample yaml (layout: system.file('extdata', 'sample_template.yaml', package = 'scphasedcn');",
+  "                          default: the SCPHASEDCN_SAMPLE_CONFIG environment variable)",
   "  --sample <key>          sample of the --config yaml (extraction dir, sex, events, type)",
   "  --mode normal|tumour    default: the sample's `type` (normal when missing)",
   "  --events <list>         known events, name=region;name=region (e.g. chr5_gain=chr5;20q_gain=chr20:28000000-)",
@@ -64,7 +64,7 @@ if (any(commandArgs(trailingOnly = TRUE) %in% c("-h", "--help"))) {
 
 RLIB = Sys.getenv("RLIB")
 if (nzchar(RLIB)) .libPaths(c(RLIB, .libPaths()))
-suppressPackageStartupMessages({ library(scncall); library(data.table) })
+suppressPackageStartupMessages({ library(scphasedcn); library(data.table) })
 fail = function(...) { message("call_scn.R: ", ...); quit(save = "no", status = 1) }
 a = cli_args(defaults = defaults, usage = usage)
 unknown = setdiff(names(a), names(defaults))
@@ -73,9 +73,9 @@ t0 = Sys.time()
 setDTthreads(as.integer(a$cores))
 split_list = function(x) if (!nzchar(x)) NULL else if (file.exists(x)) x else trimws(strsplit(x, ";", fixed = TRUE)[[1]])
 
-# sample yaml: --config, else the SCNCALL_SAMPLE_CONFIG environment variable (a default yaml for batch wrappers)
+# sample yaml: --config, else the SCPHASEDCN_SAMPLE_CONFIG environment variable (a default yaml for batch wrappers)
 cfg = NULL
-cfg_file = if (nzchar(a$config)) a$config else Sys.getenv("SCNCALL_SAMPLE_CONFIG")
+cfg_file = if (nzchar(a$config)) a$config else Sys.getenv("SCPHASEDCN_SAMPLE_CONFIG")
 if (nzchar(cfg_file)) {
   if (!file.exists(cfg_file)) fail("sample yaml not found: ", cfg_file)
   cfg = read_config(cfg_file)
@@ -131,6 +131,6 @@ res = call_scn(dir, mode = mode, cell_meta = cm, cells = cells, sex = sex, event
                features = if (nzchar(a$features)) a$features else NULL, embedding = !isTRUE(a$no_embedding),
                keep_scores = isTRUE(a$write_scores), caller_args = caller_args, centromeres = cen)
 print(res)
-files = write_scncall(res, out, write_scores = isTRUE(a$write_scores), write_features = isTRUE(a$write_features))
-print(scncall_summary(res))
+files = write_scphasedcn(res, out, write_scores = isTRUE(a$write_scores), write_features = isTRUE(a$write_features))
+print(scphasedcn_summary(res))
 cli_log("wrote ", length(files), " files to ", out, " (", round(as.numeric(difftime(Sys.time(), t0, units = "mins")), 1), " min)")

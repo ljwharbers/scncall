@@ -3,9 +3,9 @@ requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "splongcn"
+name = "scphasedcn"
 version = "0.1.0"
-description = "Extraction layer of scncall: per-cell depth, read-phased alleles and fragment tables from SPLONGGET single-cell long-read DNA BAMs"
+description = "Extraction layer of scphasedcn: per-cell depth, read-phased alleles and fragment tables from SPLONGGET single-cell long-read DNA BAMs"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Luuk Harbers", email = "luuk.harbers@vib.be" }]
@@ -21,21 +21,21 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/ljwharbers/scncall"
-Issues = "https://github.com/ljwharbers/scncall/issues"
+Homepage = "https://github.com/ljwharbers/scphasedcn"
+Issues = "https://github.com/ljwharbers/scphasedcn/issues"
 
 [project.optional-dependencies]
 test = ["pytest>=7"]
 
 [project.scripts]
-splongcn = "splongcn.cli:main"
-splongcn-extract = "splongcn.cli:main"
+scphasedcn = "scphasedcn.cli:main"
+scphasedcn-extract = "scphasedcn.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-splongcn = ["resources/*"]
+scphasedcn = ["resources/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

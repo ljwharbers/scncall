@@ -37,7 +37,7 @@ column(s) of the wrong type, or values outside the allowed set, and
 returns its input invisibly. Extra columns are allowed. Types: character
 (factors are rejected), numeric (integer or double), integer (integer or
 whole-number double), logical; an all-NA column passes any type. Schemas
-are listed in \code{vignette("scncall-outputs", package = "scncall")}.
+are listed in \code{vignette("scphasedcn-outputs", package = "scphasedcn")}.
 }
 \section{Functions}{
 \itemize{

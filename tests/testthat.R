@@ -1,4 +1,4 @@
 # testthat entry point for R CMD check
 library(testthat)
-library(scncall)
-test_check("scncall")
+library(scphasedcn)
+test_check("scphasedcn")

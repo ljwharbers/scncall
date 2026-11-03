@@ -7,7 +7,7 @@
 # Why: in tumours per-cell detection is reliable but per-cell states are not; clones are found first, and
 #      their states settle the calls.
 # Inputs: an `scn_features`-like list (see [caller_tumour()]) or the individual tables
-#         (features, regions, votes, atoms; vignette("scncall-outputs", package = "scncall")).
+#         (features, regions, votes, atoms; vignette("scphasedcn-outputs", package = "scphasedcn")).
 # Outputs: clone feature matrices, leaves / merged clones, split-test statistics.
 # See also: clones_states.R (profiles, states, segments), clones_assign.R (pieces, assignment, doublets,
 #           reference cleaning), clones_tumour.R (the tumour-mode caller and its options).

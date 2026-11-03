@@ -83,5 +83,5 @@ of cells instead), annotates arms, filters bins (default: \code{\link[=bin_filte
 and chrX), normalises depth (\code{\link[=normalise_depth]{normalise_depth()}}: \code{celltype} for normal tissue, \code{model} for tumours), builds the
 regions (\code{\link[=region_set]{region_set()}}), the depth features (\code{\link[=depth_features]{depth_features()}}), the molecule votes
 (\code{\link[=read_votes]{read_votes()}}) and the oriented allele features (\code{\link[=allelic_features]{allelic_features()}}), and joins them into the
-long features table (\code{vignette("scncall-outputs", package = "scncall")}).
+long features table (\code{vignette("scphasedcn-outputs", package = "scphasedcn")}).
 }

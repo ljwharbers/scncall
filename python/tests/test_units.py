@@ -1,7 +1,7 @@
 import numpy as np
 
-from splongcn.names import parse_name
-from splongcn.bins import Tiling, merge_intervals, in_intervals, overlap_bp
+from scphasedcn.names import parse_name
+from scphasedcn.bins import Tiling, merge_intervals, in_intervals, overlap_bp
 
 
 def test_parse_name():
@@ -23,8 +23,8 @@ def test_regular_tiling():
 
 
 def test_bundled_centromeres_cover_chrx():
-    from splongcn.bins import read_centromere
-    from splongcn.config import RESOURCES
+    from scphasedcn.bins import read_centromere
+    from scphasedcn.config import RESOURCES
     p = str(RESOURCES / "centromeres_hg38.tsv")
     assert read_centromere(p, "chrX") == (58605579, 62412542)   # Battenberg names chrX chr23
     assert read_centromere(p, "chr1") == (122026459, 125184587)
@@ -39,7 +39,7 @@ def test_intervals():
 
 
 def test_translate_barcodes(tmp_path):
-    from splongcn.config import translate_barcodes
+    from scphasedcn.config import translate_barcodes
     m = tmp_path / "map.tsv"
     m.write_text("index\tatac_barcode\trna_barcode\n1\tAAAA\tCCCC\n2\tGGGG\tTTTT\n")
     assert translate_barcodes(["CCCC", "TTTT", "NNNN"], str(m)) == (["AAAA", "GGGG"], "rna->atac")

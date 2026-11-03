@@ -2,15 +2,15 @@
 # smoke_test.sh: end-to-end check of an installation (conda env, container or source install): the extractor's CLI
 # answers, a simulated extraction directory goes through the caller's command line, and the outputs exist.
 # Usage: tools/smoke_test.sh [workdir]
-#   container: apptainer exec scncall.sif bash tools/smoke_test.sh
+#   container: apptainer exec scphasedcn.sif bash tools/smoke_test.sh
 set -euo pipefail
 W=${1:-$(mktemp -d)}
 mkdir -p "$W"
-splongcn --version
-splongcn run --help > /dev/null
-CALL=$(command -v call_scn.R || Rscript -e 'cat(system.file("scripts", "call_scn.R", package = "scncall"))')
+scphasedcn --version
+scphasedcn run --help > /dev/null
+CALL=$(command -v call_scn.R || Rscript -e 'cat(system.file("scripts", "call_scn.R", package = "scphasedcn"))')
 Rscript - "$W" <<'EOF'
-suppressPackageStartupMessages({ library(scncall); library(data.table) })
+suppressPackageStartupMessages({ library(scphasedcn); library(data.table) })
 w = commandArgs(trailingOnly = TRUE)[1]
 ev = data.table(chrom = "chr1", start = 0, end = 24e6, cnA = 1L, cnB = 0L, type = "private")
 s = simulate_scn(n_cells = 80, sex = "female", cell_types = c(a = 0.5, b = 0.5), events = ev, private_frac = 0.1,

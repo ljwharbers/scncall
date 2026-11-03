@@ -13,7 +13,7 @@ make_cell_meta(
 )
 }
 \arguments{
-\item{cells_qc}{\code{cells_qc.tsv} written by \code{splongcn} (path), its table, or the extraction directory; NULL = the
+\item{cells_qc}{\code{cells_qc.tsv} written by the extractor (\verb{scphasedcn run}; path), its table, or the extraction directory; NULL = the
 cells of the other inputs}
 
 \item{cell_types}{NULL, a path or table with columns \code{cell} and \code{cell_type} (else the first two columns), or a

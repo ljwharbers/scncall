@@ -274,7 +274,7 @@ test_that("tumour states score attenuated losses, allele-specific gains and ampl
   expect_equal(ps[region == "chr8", state_comb], "loss")
 })
 
-test_that("caller_normal runs end to end and returns a valid scncall", {
+test_that("caller_normal runs end to end and returns a valid scphasedcn", {
   rg = fake_regions(tiles = c("5Mb" = 5e6, "10Mb" = 1e7, "20Mb" = 2e7))
   ev = data.table(cell = c(1:10, 11:20), region = rep(c("chr1p", "chr8"), each = 10), state = rep(c("loss", "gain"), each = 10))
   ff = fake_features(300, rg, events = ev, seed = 3)
@@ -283,7 +283,7 @@ test_that("caller_normal runs end to end and returns a valid scncall", {
   set.seed(2)
   emb = matrix(rnorm(300 * 5), 300, 5, dimnames = list(unique(ff$cell), NULL))
   res = caller_normal(ff, regions = rg, embedding = emb, multiplets = "cell_0300", n_draws = 1500)
-  expect_s3_class(res, "scncall")
+  expect_s3_class(res, "scphasedcn")
   expect_equal(res$mode, "normal")
   expect_silent(check_calls(res$calls))
   expect_silent(check_thresholds(res$thresholds))
@@ -523,8 +523,8 @@ test_that("pool_scale tail_q: a heavier-tailed region gets tail > 1, homogeneous
   expect_true(all(pool_scale(ps, st, tail_q = 0.99, tail_k = Inf)$tail == 1))
   # pool_combine: standardised by mad x tail; a region without null pools takes the class medians and tail 1
   P = data.table(pool = 1:3, region = c("10Mb|chr1:0", "10Mb|chr2:0", "10Mb|chr99:0"), class = "10Mb", cl_loss = 10, cl_gain = 0, cl_cnloh = 0)
-  c0 = scncall:::pool_combine(copy(P), c("loss", "gain", "cnloh"), FALSE, s0)
-  c1 = scncall:::pool_combine(copy(P), c("loss", "gain", "cnloh"), FALSE, s1)
+  c0 = scphasedcn:::pool_combine(copy(P), c("loss", "gain", "cnloh"), FALSE, s0)
+  c1 = scphasedcn:::pool_combine(copy(P), c("loss", "gain", "cnloh"), FALSE, s1)
   k = match(P$region[1:2], s1$region)
   expect_equal(c1$s_comb[1:2], (10 - s1$med[k]) / (s1$mad[k] * s1$tail[k]))
   expect_equal(c1$s_comb[3], (10 - median(s1$med)) / median(s1$mad))

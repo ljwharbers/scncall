@@ -18,7 +18,7 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 | DNA BAM | yes | coordinate sorted and indexed, GRCh38 / hg38 with `chr` names, the cell barcode in the `CB` tag; duplicates flagged or removed |
 | cell whitelist | yes | one barcode per line (a trailing `-1` is stripped) |
 | reference FASTA | yes | the FASTA the reads were aligned to (GC content per bin), with its `.fai` |
-| phased heterozygous SNPs | for the allele channel; required in tumour mode | VCF with `GT` phased (`0|1`) and a `PS` phase-set tag, e.g. Clair3 + longphase, selected with `splongcn select-hets` |
+| phased heterozygous SNPs | for the allele channel; required in tumour mode | VCF with `GT` phased (`0|1`) and a `PS` phase-set tag, e.g. Clair3 + longphase, selected with `scphasedcn select-hets` |
 | sex | yes | `female` or `male` (chrX / chrY copy number) |
 | cell metadata | no | cell types (normal tissue), cells known to be copy-number neutral, groups; see below |
 | known events | no | regions reported as their own calls (e.g. a known trisomy) |
@@ -55,7 +55,7 @@ longphase phase -s pass_het.vcf.gz -b sample.clean.bam -r GRCh38.fa -o sample.lo
 bgzip sample.longphase.vcf && tabix -p vcf sample.longphase.vcf.gz
 
 # 4. select the sites the extractor uses
-splongcn select-hets --vcf sample.longphase.vcf.gz --out het_phased.vcf.gz \
+scphasedcn select-hets --vcf sample.longphase.vcf.gz --out het_phased.vcf.gz \
     --loci 1000G_snvs_hg38.vcf.gz --stats het_phased.select_stats.tsv
 ```
 
@@ -71,20 +71,20 @@ each block of a cell on the pseudobulk of the other cells (leave-one-out), tumou
 present (one phase set per chromosome), but statistical phasing flips a fraction of the block junctions, which tumour
 mode then has to undo.
 
-## 2. Extraction (`splongcn`)
+## 2. Extraction (`scphasedcn`)
 
 ```bash
-splongcn run --bam sample.bam --barcodes barcodes.tsv.gz --fasta GRCh38.fa \
+scphasedcn run --bam sample.bam --barcodes barcodes.tsv.gz --fasta GRCh38.fa \
     --snps het_phased.vcf.gz --phased --out results/sample/extract --jobs 8
 ```
 
 `run` extracts every chromosome in parallel (`--jobs`; a deep chromosome takes a few GB of memory) and merges. On a
-cluster, run `splongcn extract --chrom <chrom>` as one job per chromosome and `splongcn merge` after them, with the
+cluster, run `scphasedcn extract --chrom <chrom>` as one job per chromosome and `scphasedcn merge` after them, with the
 same options. A sample yaml keeps the paths in one place (`--config sample.yaml --sample <key>`, also read by the
 caller's command line):
 
 ```{r template, comment = ""}
-cat(readLines(system.file("extdata", "sample_template.yaml", package = "scncall")), sep = "\n")
+cat(readLines(system.file("extdata", "sample_template.yaml", package = "scphasedcn")), sep = "\n")
 ```
 
 Reference files: the FASTA is required. The blacklist, centromeres and chromosome sizes default to the bundled hg38
@@ -112,7 +112,7 @@ pieces).
 The package's simulator writes the same layout:
 
 ```{r layout}
-library(scncall)
+library(scphasedcn)
 sim = simulate_scn(n_cells = 40, seed = 1)
 d = file.path(tempdir(), "sim_extract")
 invisible(write_sim_dataset(sim, d))

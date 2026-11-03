@@ -1,6 +1,6 @@
-"""splongcn command line: run | extract | merge | select-hets | index-check.
+"""scphasedcn command line: run | extract | merge | select-hets | index-check.
 
-`splongcn run` extracts one sample (all chromosomes, then merge) into the directory scncall reads; `extract` (one
+`scphasedcn run` extracts one sample (all chromosomes, then merge) into the directory the scphasedcn R package reads; `extract` (one
 chromosome) + `merge` do the same as separate steps, e.g. one cluster job per chromosome."""
 from __future__ import annotations
 
@@ -87,7 +87,7 @@ def resolve_inputs(a):
     for w in check_reference(ref, require_fasta=not getattr(a, "no_gc", False)):
         _log("warning:", w)
     if getattr(a, "no_gc", False):
-        _log("warning: --no-gc: bins have no GC content; scncall cannot call this extraction")
+        _log("warning: --no-gc: bins have no GC content; the scphasedcn R caller cannot call this extraction")
     d["ref"] = ref
     if d["bam"] is None or d["out"] is None:
         raise SystemExit("need --bam and --out (or --config with --sample)")
@@ -128,7 +128,7 @@ def cmd_extract(a):
     pdir = Path(d["out"]) / "partials" / chrom
     pdir.mkdir(parents=True, exist_ok=True)
     (pdir / "DONE").unlink(missing_ok=True)
-    _log(f"splongcn {__version__} extract {d['sample']} {chrom} ({length} bp) cells={len(cells)} layers={sorted(layers_on)}")
+    _log(f"scphasedcn {__version__} extract {d['sample']} {chrom} ({length} bp) cells={len(cells)} layers={sorted(layers_on)}")
 
     # SNPs
     acc = None
@@ -281,7 +281,7 @@ def cmd_select_hets(a):
 
 # ----------------------------------------------------------------------------------------------- parser
 def build_parser():
-    p = argparse.ArgumentParser(prog="splongcn", description=__doc__)
+    p = argparse.ArgumentParser(prog="scphasedcn", description=__doc__)
     p.add_argument("--version", action="version", version=__version__)
     sub = p.add_subparsers(dest="cmd", required=True)
 
@@ -303,7 +303,7 @@ def build_parser():
     add_extract_args(s)
     s.set_defaults(func=cmd_run, chrom=None, region=None)
 
-    s = sub.add_parser("select-hets", help="heterozygous SNVs of a phased VCF for the allele layer (see splongcn.hets)")
+    s = sub.add_parser("select-hets", help="heterozygous SNVs of a phased VCF for the allele layer (see scphasedcn.hets)")
     s.add_argument("--vcf", required=True, help="phased VCF (bgzip + tabix), e.g. Clair3 + longphase")
     s.add_argument("--out", required=True, help="output .vcf.gz (a .tbi is written next to it)")
     s.add_argument("--loci", help="population sites VCF (bgzip + tabix; recommended, e.g. 1000 Genomes SNVs)")
@@ -322,7 +322,7 @@ def build_parser():
 
 def add_extract_args(s):
     """Options shared by `extract` (one chromosome) and `run` (all chromosomes)."""
-    s.add_argument("--config", help="sample yaml (layout: scncall's inst/extdata/sample_template.yaml)")
+    s.add_argument("--config", help="sample yaml (layout: inst/extdata/sample_template.yaml of the scphasedcn R package)")
     s.add_argument("--sample", help="sample key of the yaml")
     s.add_argument("--bam"); s.add_argument("--index", help=".bai to use instead of the one next to the BAM")
     s.add_argument("--barcodes", help="cell whitelist (one barcode per line)")
@@ -339,7 +339,7 @@ def add_extract_args(s):
     s.add_argument("--peaks", help="peak BED file for FRiP / peak_bp (optional)")
     s.add_argument("--min-mapq", type=int, default=30); s.add_argument("--min-bq", type=int, default=10)
     s.add_argument("--layers", default=DEFAULT_LAYERS,
-                   help=f"comma list of {','.join(LAYER_CHOICES)} (default {DEFAULT_LAYERS}: what scncall reads)")
+                   help=f"comma list of {','.join(LAYER_CHOICES)} (default {DEFAULT_LAYERS}: what the R caller reads)")
     s.add_argument("--fasta", help="reference FASTA (hg38, chr names; required: GC per bin)")
     s.add_argument("--blacklist", help="blacklist BED (default: the bundled ENCODE hg38 blacklist v2)")
     s.add_argument("--trf", help="tandem-repeat BED (optional)")

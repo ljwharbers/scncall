@@ -27,5 +27,5 @@ Two optional blocks hold the arguments of the two callers: \verb{tumour:} (tumou
 e.g. \code{n_draws}, \code{pool_loo}). When a block is present the result carries it as \verb{$tumour} / \verb{$normal}, filled
 up to the full defaults (\code{\link[=clone_defaults]{clone_defaults()}}, the defaults of \code{\link[=caller_normal]{caller_normal()}}); \code{\link[=call_scn]{call_scn()}} passes it to the
 caller of its mode (its \code{caller_args} take precedence) and records the values used in the result's \code{params},
-so the \code{params.yaml} of \code{\link[=write_scncall]{write_scncall()}} reads back with this function.
+so the \code{params.yaml} of \code{\link[=write_scphasedcn]{write_scphasedcn()}} reads back with this function.
 }

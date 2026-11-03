@@ -1,13 +1,13 @@
-# Bioconda recipe for v0.1.0 (submit to bioconda/bioconda-recipes once the repository is public; sha256 = GitHub's v0.1.0 tarball)
+# Bioconda recipe for v0.1.0 (submit to bioconda/bioconda-recipes; sha256 = GitHub's v0.1.0 tarball, filled in after tagging)
 {% set version = "0.1.0" %}
 
 package:
-  name: r-scncall
+  name: r-scphasedcn
   version: {{ version }}
 
 source:
-  url: https://github.com/ljwharbers/scncall/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: bc91f503085a3811505ca89a967796ead2cd6a7b3fd9907947f395935139c84e
+  url: https://github.com/ljwharbers/scphasedcn/archive/refs/tags/v{{ version }}.tar.gz
+  sha256: TODO_after_tag
 
 build:
   noarch: generic
@@ -15,9 +15,9 @@ build:
   rpaths:
     - lib/R/lib/
     - lib/
-  script: R CMD INSTALL --build . && install -m 0755 inst/scripts/call_scn.R $PREFIX/bin/call_scn.R
+  script: $R CMD INSTALL --build . && install -m 0755 inst/scripts/call_scn.R $PREFIX/bin/call_scn.R
   run_exports:
-    - {{ pin_subpackage("r-scncall", max_pin="x.x") }}
+    - {{ pin_subpackage("r-scphasedcn", max_pin="x.x") }}
 
 requirements:
   host:
@@ -47,15 +47,22 @@ requirements:
     - bioconductor-rhdf5
     - bioconductor-rsamtools
     - htslib
-    - splongcn ={{ version }}
+    - scphasedcn ={{ version }}
 
 test:
   commands:
-    - $R -e "library('scncall')"
+    - $R -e "library('scphasedcn')"
     - call_scn.R --help
 
 about:
-  home: https://github.com/ljwharbers/scncall
+  home: https://github.com/ljwharbers/scphasedcn
   license: MIT
+  license_family: MIT
   license_file: LICENSE.md
   summary: Single-cell copy-number calling from SPLONGGET long-read single-cell DNA data (depth + read-phased alleles)
+  dev_url: https://github.com/ljwharbers/scphasedcn
+  doc_url: https://ljwharbers.github.io/scphasedcn/
+
+extra:
+  recipe-maintainers:
+    - ljwharbers

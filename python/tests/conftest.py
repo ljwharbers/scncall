@@ -1,4 +1,4 @@
-"""Synthetic SPLONGGET-like BAM for the splongcn tests (built with pysam; see docstrings for the expected answers)."""
+"""Synthetic SPLONGGET-like BAM for the scphasedcn tests (built with pysam; see docstrings for the expected answers)."""
 from __future__ import annotations
 
 import os
@@ -205,7 +205,7 @@ def vcf(genome):
 @pytest.fixture(scope="session")
 def extracted(genome, bam, vcf, tmp_path_factory):
     """Run extract (default layers) on chr1, chr2, chrM, chrX and merge; return the output directory."""
-    from splongcn.cli import main
+    from scphasedcn.cli import main
     out = tmp_path_factory.mktemp("out")
     common = ["--bam", str(bam), "--barcodes", str(genome / "whitelist.tsv"), "--out", str(out), "--binsize", "100000",
               "--chrom-sizes", str(genome / "chrom.sizes"), "--fasta", str(genome / "genome.fa"),

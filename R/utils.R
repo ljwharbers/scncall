@@ -156,18 +156,18 @@ budget_threshold = function(null_scores, budget_per_1000 = 1) {
 # The entry points (call_scn, cell_features, caller_normal, caller_tumour, simulate_scn) seed the RNG internally
 # for reproducibility. rng_save() / rng_restore() put the caller's global RNG state back when the outermost entry
 # point returns; nested entry points leave the stream alone, so a run draws exactly the numbers it always drew.
-.scncall_rng = new.env(parent = emptyenv())
+.scphasedcn_rng = new.env(parent = emptyenv())
 
 rng_save = function() {
-  if (isTRUE(.scncall_rng$active)) return(NULL)
-  .scncall_rng$active = TRUE
+  if (isTRUE(.scphasedcn_rng$active)) return(NULL)
+  .scphasedcn_rng$active = TRUE
   had = exists(".Random.seed", envir = globalenv(), inherits = FALSE)
   list(had = had, seed = if (had) get(".Random.seed", envir = globalenv(), inherits = FALSE) else NULL)
 }
 
 rng_restore = function(state) {
   if (is.null(state)) return(invisible())
-  .scncall_rng$active = FALSE
+  .scphasedcn_rng$active = FALSE
   if (state$had) assign(".Random.seed", state$seed, envir = globalenv())
   else if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) rm(".Random.seed", envir = globalenv())
   invisible()

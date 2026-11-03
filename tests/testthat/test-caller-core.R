@@ -1,5 +1,5 @@
 # test-caller-core.R: parity of the caller primitives with the frozen reference scorer (helper-refscorer.R), the
-# depth strata, schema validators, the scncall object, tile names and the simulated fragment phase sets.
+# depth strata, schema validators, the scphasedcn object, tile names and the simulated fragment phase sets.
 
 core_regions = fake_regions()
 core_feat = fake_features(240, core_regions,
@@ -158,13 +158,13 @@ test_that("validators reject missing columns, wrong types and unknown values", {
   expect_silent(check_segments(copy(seg)[, f := NA]))
 })
 
-test_that("new_scncall builds and prints a result object", {
+test_that("new_scphasedcn builds and prints a result object", {
   calls = data.table(cell = c("cell_0001", "cell_0002"), region = "chr1p", class = "arm", chrom = "chr1", start = 0,
                      end = 24e6, state = "loss", score = c(12, 1), thr = 3.2, called = c(TRUE, FALSE), level = "cell",
                      source = "cell", reportable = TRUE)
-  x = new_scncall("normal", cells = unique(core_feat$cell), regions = core_regions, features = core_feat, calls = calls,
+  x = new_scphasedcn("normal", cells = unique(core_feat$cell), regions = core_regions, features = core_feat, calls = calls,
                   clones = data.table(clone = c("c1", "c2")))
-  expect_s3_class(x, "scncall")
+  expect_s3_class(x, "scphasedcn")
   expect_equal(x$params, caller_defaults())
   out = capture.output(print(x))
   expect_match(out[1], "mode: normal")
@@ -172,8 +172,8 @@ test_that("new_scncall builds and prints a result object", {
   expect_true(any(grepl(sprintf("regions: %d", nrow(core_regions)), out)))
   expect_true(any(grepl("calls: 2 rows, 1 called", out)))
   expect_true(any(grepl("clones: 2", out)))
-  expect_error(new_scncall("bogus", cells = "a", regions = core_regions))
-  expect_error(new_scncall("tumour", cells = "a", regions = core_regions[, !"class"]), "class")
+  expect_error(new_scphasedcn("bogus", cells = "a", regions = core_regions))
+  expect_error(new_scphasedcn("tumour", cells = "a", regions = core_regions[, !"class"]), "class")
 })
 
 test_that("tile names follow the window_ids format", {

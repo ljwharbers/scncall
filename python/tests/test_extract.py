@@ -112,7 +112,7 @@ def test_summary_and_params(extracted):
 
 
 def test_region_and_assign(genome, bam, tmp_path):
-    from splongcn.cli import main
+    from scphasedcn.cli import main
     common = ["--bam", str(bam), "--barcodes", str(genome / "whitelist.tsv"), "--out", str(tmp_path),
               "--chrom-sizes", str(genome / "chrom.sizes"), "--no-gc", "--no-masks"]
     assert main(["extract", "--region", "chr1:150000-250000", "--assign", "midpoint"] + common) == 0
@@ -132,7 +132,7 @@ def test_region_and_assign(genome, bam, tmp_path):
 
 def test_alleles_only_rerun(genome, bam, vcf, tmp_path):
     """The allele layer can be recomputed alone (new VCF later) without touching the depth partials."""
-    from splongcn.cli import main
+    from scphasedcn.cli import main
     common = ["--bam", str(bam), "--barcodes", str(genome / "whitelist.tsv"), "--out", str(tmp_path),
               "--chrom-sizes", str(genome / "chrom.sizes"), "--no-gc", "--no-masks"]
     assert main(["extract", "--chrom", "chr2"] + common) == 0
@@ -146,8 +146,8 @@ def test_alleles_only_rerun(genome, bam, vcf, tmp_path):
 
 
 def test_index_check(bam, tmp_path):
-    from splongcn.cli import main
-    from splongcn.bam import check_index
+    from scphasedcn.cli import main
+    from scphasedcn.bam import check_index
     info = check_index(str(bam))
     assert info["exists"] and not info["stale"]
     out = tmp_path / "idx" / "synthetic.bam.bai"
@@ -167,7 +167,7 @@ def test_outputs_and_layers(extracted, adata):
 
 
 def test_bad_layers_and_peaks_dir(genome, bam, tmp_path):
-    from splongcn.cli import main
+    from scphasedcn.cli import main
     common = ["--bam", str(bam), "--barcodes", str(genome / "whitelist.tsv"), "--out", str(tmp_path / "o"),
               "--chrom-sizes", str(genome / "chrom.sizes"), "--no-gc", "--no-masks", "--chrom", "chr1"]
     with pytest.raises(SystemExit, match="unknown layer"):

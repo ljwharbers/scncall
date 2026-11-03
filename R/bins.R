@@ -71,7 +71,7 @@ annotate_arms = function(bins, centromeres = hg38_centromeres(), pad = 1e6) {
 #' @examples
 #' head(data.table::fread(hg38_centromeres()))
 hg38_centromeres = function() {
-  f = system.file("extdata", "centromeres_hg38.tsv", package = "scncall")
+  f = system.file("extdata", "centromeres_hg38.tsv", package = "scphasedcn")
   if (!nzchar(f)) stop("hg38_centromeres: centromeres_hg38.tsv is missing from the installed package")
   f
 }

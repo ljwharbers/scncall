@@ -28,7 +28,7 @@ discovery and pseudobulks but assigned and flagged}
 \item{verbose}{log progress}
 }
 \value{
-\code{scncall} (mode tumour) with clones, assignments, segments, profiles, calls (plus \code{extra}:
+\code{scphasedcn} (mode tumour) with clones, assignments, segments, profiles, calls (plus \code{extra}:
 intermediate results in \code{null_fit$clones})
 }
 \description{
