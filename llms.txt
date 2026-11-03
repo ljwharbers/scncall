@@ -1,0 +1,560 @@
+# scphasedcn
+
+Single-cell copy-number calling for **SPLONGGET**: single-cell long-read
+DNA sequencing in which every read carries a 10x Multiome cell barcode
+and is sequenced on Oxford Nanopore. scphasedcn combines read depth with
+read-phased alleles (each molecule covering a phased heterozygous SNP
+votes for a haplotype), per cell and region:
+
+- **normal tissue**: rare, cell-private gains, losses and copy-neutral
+  LOH, with thresholds calibrated on null cells (1 false call per 1,000
+  null cell-regions), per cell and in cell pools;
+- **tumours**: clone discovery, allele-specific clone copy-number
+  profiles, likelihood assignment of every cell, per-cell inherited /
+  confirmed calls, and input for MEDICC2 trees.
+
+The repository holds two packages, both named scphasedcn, that are used
+together:
+
+| package | language | does |
+|----|----|----|
+| `scphasedcn` (Python, `python/`) | Python (pysam) | BAM -\> extraction directory: per-cell 100 kb bin counts, a fragment table with haplotypes, cell QC |
+| `scphasedcn` (R, root) | R | extraction directory -\> calls, clones, tables |
+
+## Install
+
+Container (Docker / Apptainer / Singularity; R, Python, both packages
+and htslib):
+
+``` bash
+apptainer pull docker://ghcr.io/ljwharbers/scphasedcn:0.1.0
+apptainer exec scphasedcn_0.1.0.sif scphasedcn --help
+```
+
+Conda (from a checkout):
+
+``` bash
+git clone https://github.com/ljwharbers/scphasedcn && cd scphasedcn
+conda env create -f environment.yml && conda activate scphasedcn      # or micromamba
+pip install ./python && R CMD INSTALL .
+bash tools/smoke_test.sh                                            # end-to-end check on simulated data
+```
+
+To reproduce results exactly, use the container of the release: per-cell
+calls are identical across installations, but the chromatin-kNN pooled
+calls depend slightly on the BLAS and `irlba` versions.
+
+From source into existing installations: `pip install ./python` (Python
+\>= 3.10) and, in R (\>= 4.2),
+`install.packages("pak"); pak::pak("ljwharbers/scphasedcn")`
+(Bioconductor dependencies: rhdf5, Rsamtools). A `tabix` on the PATH
+speeds up reading the fragment table.
+
+## Quick start
+
+``` bash
+# 1. phased heterozygous SNPs (Clair3 + longphase on the pooled BAM; see vignette("scphasedcn-inputs"))
+scphasedcn select-hets --vcf sample.longphase.vcf.gz --loci 1000G_snvs_hg38.vcf.gz --out het_phased.vcf.gz
+
+# 2. extraction (all chromosomes in parallel, then merge)
+scphasedcn run --bam sample.bam --barcodes barcodes.tsv.gz --fasta GRCh38.fa \
+    --snps het_phased.vcf.gz --phased --out results/sample/extract --jobs 8
+
+# 3. calling
+CALL=$(Rscript -e 'cat(system.file("scripts", "call_scn.R", package = "scphasedcn"))')   # in the container: call_scn.R
+Rscript $CALL --dir results/sample/extract --out results/sample/caller --sex female --mode normal --null-cells select
+```
+
+or in R:
+
+``` r
+
+library(scphasedcn)
+res = call_scn("results/sample/extract", mode = "tumour", sex = "male")
+write_scphasedcn(res, "results/sample/caller")
+```
+
+Documentation: <https://ljwharbers.github.io/scphasedcn/>, or in R
+[`vignette("scphasedcn")`](https://ljwharbers.github.io/scphasedcn/articles/scphasedcn.md)
+(overview and a run on simulated data),
+[`vignette("scphasedcn-inputs")`](https://ljwharbers.github.io/scphasedcn/articles/scphasedcn-inputs.md)
+(input requirements, phasing recipe, extraction, cell metadata),
+[`vignette("scphasedcn-outputs")`](https://ljwharbers.github.io/scphasedcn/articles/scphasedcn-outputs.md)
+(result tables).
+
+Scope: GRCh38 / hg38 with `chr` names; Linux and macOS.
+
+## Citation
+
+Please cite the SPLONGGET paper (reference to be added on publication)
+and the package: `citation("scphasedcn")`.
+
+## License
+
+MIT (`LICENSE.md`). The bundled ENCODE blacklist (Amemiya et al. 2019)
+and centromere coordinates (Battenberg) are credited in
+`python/src/scphasedcn/resources/README.md`.
+
+# Package index
+
+## All functions
+
+- [`allelic_features()`](https://ljwharbers.github.io/scphasedcn/reference/allelic_features.md)
+  : Allele features per cell and region
+
+- [`allelic_noisy_tiles()`](https://ljwharbers.github.io/scphasedcn/reference/allelic_noisy_tiles.md)
+  : Allelically overdispersed tiles (data-driven allelic mask)
+
+- [`annotate_arms()`](https://ljwharbers.github.io/scphasedcn/reference/annotate_arms.md)
+  : Chromosome arms and centromere flags from the Battenberg coordinate
+  table
+
+- [`apply_thresholds()`](https://ljwharbers.github.io/scphasedcn/reference/apply_thresholds.md)
+  : Apply null thresholds to scored rows
+
+- [`arm_regions()`](https://ljwharbers.github.io/scphasedcn/reference/arm_regions.md)
+  : Arm regions from an annotated bins table
+
+- [`arm_table()`](https://ljwharbers.github.io/scphasedcn/reference/arm_table.md)
+  : Chromosome arms (Battenberg coordinates)
+
+- [`as_dgc()`](https://ljwharbers.github.io/scphasedcn/reference/as_dgc.md)
+  : Coerce to a bins x cells dgCMatrix
+
+- [`assign_cells()`](https://ljwharbers.github.io/scphasedcn/reference/assign_cells.md)
+  : Assign cells to clones by their likelihood under the clone states
+
+- [`assign_folds()`](https://ljwharbers.github.io/scphasedcn/reference/assign_folds.md)
+  : Cross-validation folds of cells
+
+- [`assign_hstratum()`](https://ljwharbers.github.io/scphasedcn/reference/assign_hstratum.md)
+  : Vote stratum of each row
+
+- [`atoms_from_regions()`](https://ljwharbers.github.io/scphasedcn/reference/atoms_from_regions.md)
+  : Allele atoms
+
+- [`atoms_in_tiles()`](https://ljwharbers.github.io/scphasedcn/reference/atoms_in_tiles.md)
+  : Atoms whose start lies in the masked tiles
+
+- [`bb_loglik()`](https://ljwharbers.github.io/scphasedcn/reference/bb_loglik.md)
+  : Beta-binomial log-likelihood
+
+- [`bin_filter()`](https://ljwharbers.github.io/scphasedcn/reference/bin_filter.md)
+  : Usable-bin flag
+
+- [`budget_threshold()`](https://ljwharbers.github.io/scphasedcn/reference/budget_threshold.md)
+  : Threshold at a false-call budget from null scores
+
+- [`budget_thresholds()`](https://ljwharbers.github.io/scphasedcn/reference/budget_thresholds.md)
+  : Null thresholds at the false-call budget
+
+- [`build_layers_from_fragments()`](https://ljwharbers.github.io/scphasedcn/reference/build_layers_from_fragments.md)
+  : Build the bin-level layers from a fragment table
+
+- [`call_policy()`](https://ljwharbers.github.io/scphasedcn/reference/call_policy.md)
+  : Calling policy: which class x state is called at which level
+
+- [`call_pools()`](https://ljwharbers.github.io/scphasedcn/reference/call_pools.md)
+  : Pooled calls
+
+- [`call_scn()`](https://ljwharbers.github.io/scphasedcn/reference/call_scn.md)
+  : Single-cell copy-number calls of a sample
+
+- [`call_table()`](https://ljwharbers.github.io/scphasedcn/reference/call_table.md)
+  : Per-cell calls table
+
+- [`caller_defaults()`](https://ljwharbers.github.io/scphasedcn/reference/caller_defaults.md)
+  : Default parameters of the copy-number caller
+
+- [`caller_normal()`](https://ljwharbers.github.io/scphasedcn/reference/caller_normal.md)
+  : Normal-tissue copy-number caller
+
+- [`caller_params()`](https://ljwharbers.github.io/scphasedcn/reference/caller_params.md)
+  : Caller parameters from the caller config
+
+- [`caller_states()`](https://ljwharbers.github.io/scphasedcn/reference/caller_states.md)
+  : Copy-number state sets of the scorer
+
+- [`caller_tumour()`](https://ljwharbers.github.io/scphasedcn/reference/caller_tumour.md)
+  : Tumour-mode copy-number caller
+
+- [`cell_features()`](https://ljwharbers.github.io/scphasedcn/reference/cell_features.md)
+  : Per-cell per-region features of a sample
+
+- [`cell_piece_candidates()`](https://ljwharbers.github.io/scphasedcn/reference/cell_piece_candidates.md)
+  : Candidate per-cell states of the MEDICC2 pieces
+
+- [`cell_piece_data()`](https://ljwharbers.github.io/scphasedcn/reference/cell_piece_data.md)
+  : Per-cell evidence on the MEDICC2 pieces: depth and oriented molecule
+  votes
+
+- [`cell_piece_states()`](https://ljwharbers.github.io/scphasedcn/reference/cell_piece_states.md)
+  : Per-cell copy-number states on the MEDICC2 pieces
+
+- [`cell_qc()`](https://ljwharbers.github.io/scphasedcn/reference/cell_qc.md)
+  : Cell QC of the caller
+
+- [`check_regions()`](https://ljwharbers.github.io/scphasedcn/reference/check_tables.md)
+  [`check_votes()`](https://ljwharbers.github.io/scphasedcn/reference/check_tables.md)
+  [`check_atoms()`](https://ljwharbers.github.io/scphasedcn/reference/check_tables.md)
+  [`check_features()`](https://ljwharbers.github.io/scphasedcn/reference/check_tables.md)
+  [`check_thresholds()`](https://ljwharbers.github.io/scphasedcn/reference/check_tables.md)
+  [`check_calls()`](https://ljwharbers.github.io/scphasedcn/reference/check_tables.md)
+  [`check_segments()`](https://ljwharbers.github.io/scphasedcn/reference/check_tables.md)
+  : Validate the caller's tables against their schemas
+
+- [`chrom_rank()`](https://ljwharbers.github.io/scphasedcn/reference/chrom_rank.md)
+  : Order chromosome names naturally (chr1..chr22, chrX, chrY, chrM,
+  others)
+
+- [`chromatin_embedding()`](https://ljwharbers.github.io/scphasedcn/reference/chromatin_embedding.md)
+  : High-pass-filtered chromatin embedding (kNN neighbourhoods of the
+  caller)
+
+- [`clean_reference()`](https://ljwharbers.github.io/scphasedcn/reference/clean_reference.md)
+  : Clean the normal reference pool with the allele channel
+
+- [`cli_args()`](https://ljwharbers.github.io/scphasedcn/reference/cli_args.md)
+  :
+
+  Parse `--key value` and `--flag` arguments
+
+- [`cli_cells()`](https://ljwharbers.github.io/scphasedcn/reference/cli_cells.md)
+  :
+
+  Cell subset from a file (one cell per line or a TSV with a `cell`
+  column)
+
+- [`cli_events()`](https://ljwharbers.github.io/scphasedcn/reference/cli_events.md)
+  :
+
+  Event regions of a sample (config `events` map) as a regions table
+
+- [`cli_log()`](https://ljwharbers.github.io/scphasedcn/reference/cli_log.md)
+  : Timestamped message
+
+- [`cli_sample()`](https://ljwharbers.github.io/scphasedcn/reference/cli_sample.md)
+  : Sample entry of a sample yaml (with its extraction directory)
+
+- [`cli_write()`](https://ljwharbers.github.io/scphasedcn/reference/cli_write.md)
+  : Write a data.table as TSV into the output directory
+
+- [`clone_allelic_distance()`](https://ljwharbers.github.io/scphasedcn/reference/clone_allelic_distance.md)
+  : Allelic distance between clones under the all-cell orientation
+
+- [`clone_ami()`](https://ljwharbers.github.io/scphasedcn/reference/clone_ami.md)
+  : Adjusted mutual information of two labelings
+
+- [`clone_ari()`](https://ljwharbers.github.io/scphasedcn/reference/clone_ari.md)
+  : Adjusted Rand index of two labelings
+
+- [`clone_defaults()`](https://ljwharbers.github.io/scphasedcn/reference/clone_defaults.md)
+  : Defaults of the tumour mode
+
+- [`clone_feature_matrix()`](https://ljwharbers.github.io/scphasedcn/reference/clone_feature_matrix.md)
+  : Cells x features matrix for clone discovery
+
+- [`clone_profiles()`](https://ljwharbers.github.io/scphasedcn/reference/clone_profiles.md)
+  : Clone pseudobulk profiles
+
+- [`clone_state_distance()`](https://ljwharbers.github.io/scphasedcn/reference/clone_state_distance.md)
+  : Allelic state distance between clones
+
+- [`clone_trunks()`](https://ljwharbers.github.io/scphasedcn/reference/clone_trunks.md)
+  : Trunks of a clone set
+
+- [`cn_grid()`](https://ljwharbers.github.io/scphasedcn/reference/cn_grid.md)
+  : Allele-specific copy-number state grid
+
+- [`collapse_molecules()`](https://ljwharbers.github.io/scphasedcn/reference/collapse_molecules.md)
+  : Collapse fragments into molecules
+
+- [`consolidate_calls()`](https://ljwharbers.github.io/scphasedcn/reference/consolidate_calls.md)
+  : Consolidate nested calls into events
+
+- [`contrast_data()`](https://ljwharbers.github.io/scphasedcn/reference/contrast_data.md)
+  : Data for repeated clone contrasts
+
+- [`control_regions()`](https://ljwharbers.github.io/scphasedcn/reference/control_regions.md)
+  : Control regions of a tumour: pieces neutral in every clone
+
+- [`dense()`](https://ljwharbers.github.io/scphasedcn/reference/dense.md)
+  : Dense double matrix from any matrix-like
+
+- [`depth_features()`](https://ljwharbers.github.io/scphasedcn/reference/depth_features.md)
+  : Depth features per cell and region
+
+- [`depth_stratum()`](https://ljwharbers.github.io/scphasedcn/reference/depth_stratum.md)
+  : Depth stratum of a cell
+
+- [`detect_phasing()`](https://ljwharbers.github.io/scphasedcn/reference/detect_phasing.md)
+  : Phasing regime of a votes table
+
+- [`discover_clones()`](https://ljwharbers.github.io/scphasedcn/reference/discover_clones.md)
+  : Discover clone leaves: smoothed PCA + Ward tree over-cut
+
+- [`discover_within()`](https://ljwharbers.github.io/scphasedcn/reference/discover_within.md)
+  : Clone discovery within a trunk
+
+- [`feature_windows()`](https://ljwharbers.github.io/scphasedcn/reference/feature_windows.md)
+  : 1 Mb window depth of a precomputed features object
+
+- [`fit_allelic_null()`](https://ljwharbers.github.io/scphasedcn/reference/fit_allelic_null.md)
+  : Beta-binomial overdispersion of the null allele votes
+
+- [`fit_bb_rho()`](https://ljwharbers.github.io/scphasedcn/reference/fit_bb_rho.md)
+  : Fit the beta-binomial overdispersion on balanced (flat) counts
+
+- [`fit_clone_states()`](https://ljwharbers.github.io/scphasedcn/reference/fit_clone_states.md)
+  : Fit clone copy-number states
+
+- [`fit_depth_null()`](https://ljwharbers.github.io/scphasedcn/reference/fit_depth_null.md)
+  : Student-t fit of the null depth z per group
+
+- [`flag_doublet_clones()`](https://ljwharbers.github.io/scphasedcn/reference/flag_doublet_clones.md)
+  : Flag clones that are 50:50 mixtures of two other clones
+
+- [`group_indicator()`](https://ljwharbers.github.io/scphasedcn/reference/group_indicator.md)
+  : Aggregation matrix mapping rows (bins) to groups
+
+- [`hap_code()`](https://ljwharbers.github.io/scphasedcn/reference/hap_code.md)
+  [`hap_label()`](https://ljwharbers.github.io/scphasedcn/reference/hap_code.md)
+  :
+
+  Haplotype codes used in the fragments `hap` column
+
+- [`hg38_centromeres()`](https://ljwharbers.github.io/scphasedcn/reference/hg38_centromeres.md)
+  : Path of the hg38 centromere table shipped with the package
+
+- [`imbalance_states()`](https://ljwharbers.github.io/scphasedcn/reference/imbalance_states.md)
+  : Allelic states
+
+- [`knn_pools()`](https://ljwharbers.github.io/scphasedcn/reference/knn_pools.md)
+  : Chromatin-neighbourhood pools
+
+- [`ll_allelic()`](https://ljwharbers.github.io/scphasedcn/reference/ll_allelic.md)
+  : Oriented allelic log-likelihood ratio vs balanced
+
+- [`ll_depth_shift()`](https://ljwharbers.github.io/scphasedcn/reference/ll_depth_shift.md)
+  : Depth log-likelihood ratio of a location shift
+
+- [`locate_bins()`](https://ljwharbers.github.io/scphasedcn/reference/locate_bins.md)
+  : Index of the bin containing each position
+
+- [`make_bins()`](https://ljwharbers.github.io/scphasedcn/reference/make_bins.md)
+  : Tile chromosomes into fixed-width bins
+
+- [`make_cell_meta()`](https://ljwharbers.github.io/scphasedcn/reference/make_cell_meta.md)
+  : Cell metadata for the caller
+
+- [`make_pools()`](https://ljwharbers.github.io/scphasedcn/reference/make_pools.md)
+  : Random pools of cells within groups
+
+- [`match_depth_null()`](https://ljwharbers.github.io/scphasedcn/reference/match_depth_null.md)
+  : Per-row Student-t null parameters
+
+- [`medicc2_pieces()`](https://ljwharbers.github.io/scphasedcn/reference/medicc2_pieces.md)
+  : Common copy-number pieces of the clones of a tumour run (MEDICC2
+  export, step 1)
+
+- [`medicc2_table()`](https://ljwharbers.github.io/scphasedcn/reference/medicc2_table.md)
+  : MEDICC2 input table (MEDICC2 export, step 3)
+
+- [`merge_clones()`](https://ljwharbers.github.io/scphasedcn/reference/merge_clones.md)
+  : Merge over-split clone leaves with a permutation-calibrated split
+  test
+
+- [`multiplet_table()`](https://ljwharbers.github.io/scphasedcn/reference/multiplet_table.md)
+  : Multiplet table of the caller
+
+- [`new_scn()`](https://ljwharbers.github.io/scphasedcn/reference/new_scn.md)
+  : Construct an scn object
+
+- [`new_scphasedcn()`](https://ljwharbers.github.io/scphasedcn/reference/new_scphasedcn.md)
+  : The caller's result object
+
+- [`normalise_depth()`](https://ljwharbers.github.io/scphasedcn/reference/normalise_depth.md)
+  : Normalise read depth against a reference
+
+- [`null_false_calls()`](https://ljwharbers.github.io/scphasedcn/reference/null_false_calls.md)
+  : Realised false calls on the null rows of a scored table
+
+- [`orient_blocks()`](https://ljwharbers.github.io/scphasedcn/reference/orient_blocks.md)
+  : Orient phase blocks by a leave-one-out pseudobulk
+
+- [`orient_clone_states()`](https://ljwharbers.github.io/scphasedcn/reference/orient_clone_states.md)
+  : Common haplotype orientation of clone states per piece (MEDICC2
+  export, step 2)
+
+- [`parse_region()`](https://ljwharbers.github.io/scphasedcn/reference/parse_region.md)
+  : Parse a region string "chr20:28000000-" or "chr5" into a data.table
+
+- [`pool_scale()`](https://ljwharbers.github.io/scphasedcn/reference/pool_scale.md)
+  : Per-region scale of pooled null scores
+
+- [`pool_scores()`](https://ljwharbers.github.io/scphasedcn/reference/pool_scores.md)
+  : Pooled state scores
+
+- [`pooled_thresholds()`](https://ljwharbers.github.io/scphasedcn/reference/pooled_thresholds.md)
+  : Null thresholds of pooled scores
+
+- [`read_bins_h5ad()`](https://ljwharbers.github.io/scphasedcn/reference/read_bins_h5ad.md)
+  :
+
+  Read `bins_100kb.h5ad` into an scn object (missing layers tolerated)
+
+- [`read_cells_qc()`](https://ljwharbers.github.io/scphasedcn/reference/read_cells_qc.md)
+  :
+
+  Read `cells_qc.tsv`
+
+- [`read_chrom_sizes()`](https://ljwharbers.github.io/scphasedcn/reference/read_chrom_sizes.md)
+  : Chromosome sizes from a FASTA index (.fai)
+
+- [`read_config()`](https://ljwharbers.github.io/scphasedcn/reference/read_config.md)
+  : Read a YAML config (sample yaml or caller yaml)
+
+- [`read_fragments()`](https://ljwharbers.github.io/scphasedcn/reference/read_fragments.md)
+  : Read fragments (whole file or tabix regions)
+
+- [`read_scphasedcn()`](https://ljwharbers.github.io/scphasedcn/reference/read_scphasedcn.md)
+  :
+
+  Read a caller result written by
+  [`write_scphasedcn()`](https://ljwharbers.github.io/scphasedcn/reference/write_scphasedcn.md)
+
+- [`read_votes()`](https://ljwharbers.github.io/scphasedcn/reference/read_votes.md)
+  : Molecule votes per cell, atom and phase set
+
+- [`realised_false_calls()`](https://ljwharbers.github.io/scphasedcn/reference/realised_false_calls.md)
+  : Realised false-call rates on the null rows
+
+- [`region_bin_matrix()`](https://ljwharbers.github.io/scphasedcn/reference/region_bin_matrix.md)
+  : Region x bin indicator under the depth (containment) rule
+
+- [`region_bins()`](https://ljwharbers.github.io/scphasedcn/reference/region_bins.md)
+  : Bins overlapping a set of regions
+
+- [`region_classes()`](https://ljwharbers.github.io/scphasedcn/reference/region_classes.md)
+  : Region classes of the caller
+
+- [`region_features()`](https://ljwharbers.github.io/scphasedcn/reference/region_features.md)
+  : Per-cell depth features on arbitrary regions
+
+- [`region_set()`](https://ljwharbers.github.io/scphasedcn/reference/region_set.md)
+  : The regions table of the caller
+
+- [`regions_from_features()`](https://ljwharbers.github.io/scphasedcn/reference/regions_from_features.md)
+  : Minimal regions table from a features table
+
+- [`resolve_nested()`](https://ljwharbers.github.io/scphasedcn/reference/resolve_nested.md)
+  : Resolve chromosome-level gains against depth and nested calls
+
+- [`rho_by_chrom()`](https://ljwharbers.github.io/scphasedcn/reference/rho_by_chrom.md)
+  : Per-chromosome allelic overdispersion, shrunk to the global
+
+- [`rho_rows()`](https://ljwharbers.github.io/scphasedcn/reference/rho_rows.md)
+  :
+
+  Per-row rho from a
+  [`rho_by_chrom()`](https://ljwharbers.github.io/scphasedcn/reference/rho_by_chrom.md)
+  table (the global rho where the chromosome has none)
+
+- [`robust_rho()`](https://ljwharbers.github.io/scphasedcn/reference/robust_rho.md)
+  : Robust overdispersion of null allele votes
+
+- [`scn_embedding()`](https://ljwharbers.github.io/scphasedcn/reference/scn_embedding.md)
+  : Chromatin embedding of the cells of a sample
+
+- [`score_cells()`](https://ljwharbers.github.io/scphasedcn/reference/score_cells.md)
+  : Per-state log-likelihood ratios and scores per cell x region
+
+- [`scphasedcn_summary()`](https://ljwharbers.github.io/scphasedcn/reference/scphasedcn_summary.md)
+  : Headline numbers of a caller result
+
+- [`sd_class_of()`](https://ljwharbers.github.io/scphasedcn/reference/sd_class_of.md)
+  : sd_class of a region (which null regions give its per-cell null SD)
+
+- [`segment_clone()`](https://ljwharbers.github.io/scphasedcn/reference/segment_clone.md)
+  : Segment clone profiles (Viterbi)
+
+- [`segment_pieces()`](https://ljwharbers.github.io/scphasedcn/reference/segment_pieces.md)
+  : Pieces: the union of all clone segment breakpoints
+
+- [`select_null_cells()`](https://ljwharbers.github.io/scphasedcn/reference/select_null_cells.md)
+  : Self-calibrated null cell set (normal tissue)
+
+- [`sim_events_tumour()`](https://ljwharbers.github.io/scphasedcn/reference/sim_events_tumour.md)
+  : Default clonal tumour events for the simulator
+
+- [`sim_genome()`](https://ljwharbers.github.io/scphasedcn/reference/sim_genome.md)
+  : Mini genome for simulations
+
+- [`simulate_scn()`](https://ljwharbers.github.io/scphasedcn/reference/simulate_scn.md)
+  : Simulate a SPLONGGET-like single-nucleus DNA data set
+
+- [`split_alt_states()`](https://ljwharbers.github.io/scphasedcn/reference/split_alt_states.md)
+  : Alternative states of a clone segment for the disagreement split
+
+- [`split_disagree()`](https://ljwharbers.github.io/scphasedcn/reference/split_disagree.md)
+  : Split clones whose cells disagree with the clone state on a segment
+
+- [`split_votes()`](https://ljwharbers.github.io/scphasedcn/reference/split_votes.md)
+  : Split molecule votes into two independent halves
+
+- [`split_win()`](https://ljwharbers.github.io/scphasedcn/reference/split_win.md)
+  : Split window depth into two independent halves
+
+- [`subset_scn()`](https://ljwharbers.github.io/scphasedcn/reference/subset_scn.md)
+  : Subset an scn object by cells and/or bins
+
+- [`switch_attenuation()`](https://ljwharbers.github.io/scphasedcn/reference/switch_attenuation.md)
+  : Expected attenuation of the anchored imbalance by switch errors
+
+- [`tile_name()`](https://ljwharbers.github.io/scphasedcn/reference/tile_name.md)
+  : Tile region name
+
+- [`update_allelic_features()`](https://ljwharbers.github.io/scphasedcn/reference/update_allelic_features.md)
+  : Re-aggregate the allele features of a features object without some
+  atoms
+
+- [`vote_bins()`](https://ljwharbers.github.io/scphasedcn/reference/vote_bins.md)
+  : Vote strata: bins of the allele votes per class x depth stratum
+
+- [`window_ids()`](https://ljwharbers.github.io/scphasedcn/reference/window_ids.md)
+  : Window id per bin for aggregation to a coarser grid
+
+- [`window_matrices()`](https://ljwharbers.github.io/scphasedcn/reference/window_matrices.md)
+  : Window count matrices for clone pseudobulks
+
+- [`window_table()`](https://ljwharbers.github.io/scphasedcn/reference/window_table.md)
+  : Windows table (coordinates per window id)
+
+- [`write_alleles_h5ad()`](https://ljwharbers.github.io/scphasedcn/reference/write_alleles_h5ad.md)
+  :
+
+  Write the allele counts as `alleles_dna.h5ad` (layers AD, DP; var =
+  SNPs)
+
+- [`write_bins_h5ad()`](https://ljwharbers.github.io/scphasedcn/reference/write_bins_h5ad.md)
+  :
+
+  Write an scn object as `bins_100kb.h5ad` (anndata layout, gzip only)
+
+- [`write_fragments()`](https://ljwharbers.github.io/scphasedcn/reference/write_fragments.md)
+  : Write a fragments table as bgzipped TSV with a tabix index
+
+- [`write_scphasedcn()`](https://ljwharbers.github.io/scphasedcn/reference/write_scphasedcn.md)
+  : Write a caller result to a directory
+
+- [`write_sim_dataset()`](https://ljwharbers.github.io/scphasedcn/reference/write_sim_dataset.md)
+  : Write a simulated data set in the extraction-layer layout
+
+# Articles
+
+### Using scphasedcn
+
+- [Inputs: from a SPLONGGET BAM to the extraction
+  directory](https://ljwharbers.github.io/scphasedcn/articles/scphasedcn-inputs.md):
+- [Outputs: the result object and
+  tables](https://ljwharbers.github.io/scphasedcn/articles/scphasedcn-outputs.md):

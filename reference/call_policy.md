@@ -1,0 +1,40 @@
+# Calling policy: which class x state is called at which level
+
+Normal tissue: per cell, chromosomes in every state and arm / 50 Mb
+losses and CN-LOH are reportable; 20 Mb losses / CN-LOH and
+sub-chromosome gains are computed per cell but not reportable
+(`reportable = FALSE`, recall 0.24-0.74 per cell); 5 / 10 Mb tiles and
+sub-chromosome gains are pooled (`level = "pool"`, every class x state
+reportable). Named `event` regions are reportable per cell. Tumour:
+per-cell rows (detection / clone assignment) are not reportable; the
+state is reported at clone level.
+
+## Usage
+
+``` r
+call_policy(mode = c("normal", "tumour"), sex = NULL)
+```
+
+## Arguments
+
+- mode:
+
+  "normal" or "tumour"
+
+- sex:
+
+  "female", "male" or NULL (unknown, treated as female)
+
+## Value
+
+data.table class, state, level (cell \| pool \| clone), reportable, chrx
+
+## Details
+
+Column `chrx` says whether rows on chrX are reportable at that level. In
+normal tissue of a female (or unknown sex) chrX pools are not
+reportable: X-inactivation makes neighbouring cells share the active X,
+so allelic imbalance of chrX at neighbourhood (pool) scale is expected
+biology, not a copy-number event; per-cell chrX calls stay reportable.
+Male chrX is depth-only and its pools are reportable. Pass a policy with
+`chrx = TRUE` to override.
