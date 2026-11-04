@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/ljwharbers/scphasedcn/blob/v0.1.1/inst/CITATION)
+[`inst/CITATION`](https://github.com/ljwharbers/scphasedcn/blob/main/inst/CITATION)
 
 Harbers L (2026). scphasedcn: single-cell copy-number calling from
 long-read single-cell DNA data. R package version 0.1.1.
