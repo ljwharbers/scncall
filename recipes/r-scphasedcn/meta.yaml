@@ -1,4 +1,4 @@
-# Bioconda recipe for v0.1.1 (submitted to bioconda/bioconda-recipes; sha256 = GitHub's v0.1.1 tarball, filled in after tagging)
+# Bioconda recipe for v0.1.1 (submitted to bioconda/bioconda-recipes; sha256 = GitHub's v0.1.1 tarball)
 {% set version = "0.1.1" %}
 
 package:
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://github.com/ljwharbers/scphasedcn/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: TODO_after_tag
+  sha256: 9161d19cf8d0b057bd91f472cb4cfcd5cf8e3967559d1fdf717eb05e331e1d46
 
 build:
   noarch: generic
