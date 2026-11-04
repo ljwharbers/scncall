@@ -1,3 +1,11 @@
+# scphasedcn 0.1.1
+
+* Extractor (Python): the `read_id` of a read whose name does not follow the SPLONGGET convention
+  (`<CB>_#<uuid>_<sign><piece>of<npieces>`) is now a stable 64-bit blake2b digest of the name. It was Python's `hash()`,
+  which is salted per process, so for BAMs from other pipelines the `read_id` column of `fragments.tsv.gz` changed
+  from run to run. Reads named in the SPLONGGET convention are unaffected, and so are depth, alleles and the caller.
+* No changes to the R package.
+
 # scphasedcn 0.1.0
 
 First public release of scphasedcn.
