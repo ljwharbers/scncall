@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">scphasedcn</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -95,8 +95,8 @@
 <h2 id="install">Install<a class="anchor" aria-label="anchor" href="#install"></a>
 </h2>
 <p>Container (Docker / Apptainer / Singularity; R, Python, both packages and htslib):</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="ex">apptainer</span> pull docker://ghcr.io/ljwharbers/scphasedcn:0.1.0</span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="ex">apptainer</span> exec scphasedcn_0.1.0.sif scphasedcn <span class="at">--help</span></span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="ex">apptainer</span> pull docker://ghcr.io/ljwharbers/scphasedcn:0.1.1</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="ex">apptainer</span> exec scphasedcn_0.1.1.sif scphasedcn <span class="at">--help</span></span></code></pre></div>
 <p>Conda (from a checkout):</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">git</span> clone https://github.com/ljwharbers/scphasedcn <span class="kw">&amp;&amp;</span> <span class="bu">cd</span> scphasedcn</span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="ex">conda</span> env create <span class="at">-f</span> environment.yml <span class="kw">&amp;&amp;</span> <span class="ex">conda</span> activate scphasedcn      <span class="co"># or micromamba</span></span>

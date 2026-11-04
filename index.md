@@ -27,8 +27,8 @@ Container (Docker / Apptainer / Singularity; R, Python, both packages
 and htslib):
 
 ``` bash
-apptainer pull docker://ghcr.io/ljwharbers/scphasedcn:0.1.0
-apptainer exec scphasedcn_0.1.0.sif scphasedcn --help
+apptainer pull docker://ghcr.io/ljwharbers/scphasedcn:0.1.1
+apptainer exec scphasedcn_0.1.1.sif scphasedcn --help
 ```
 
 Conda (from a checkout):

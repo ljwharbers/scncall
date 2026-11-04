@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">scphasedcn</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,6 +39,11 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.1" id="scphasedcn-011">scphasedcn 0.1.1<a class="anchor" aria-label="anchor" href="#scphasedcn-011"></a></h2>
+<ul><li>Extractor (Python): the <code>read_id</code> of a read whose name does not follow the SPLONGGET convention (<code>&lt;CB&gt;_#&lt;uuid&gt;_&lt;sign&gt;&lt;piece&gt;of&lt;npieces&gt;</code>) is now a stable 64-bit blake2b digest of the name. It was Python’s <code>hash()</code>, which is salted per process, so for BAMs from other pipelines the <code>read_id</code> column of <code>fragments.tsv.gz</code> changed from run to run. Reads named in the SPLONGGET convention are unaffected, and so are depth, alleles and the caller.</li>
+<li>No changes to the R package.</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="scphasedcn-010">scphasedcn 0.1.0<a class="anchor" aria-label="anchor" href="#scphasedcn-010"></a></h2>
 <p>First public release of scphasedcn.</p>
 <ul><li>
@@ -56,7 +61,8 @@
 <code><a href="../reference/simulate_scn.html">simulate_scn()</a></code> / <code><a href="../reference/write_sim_dataset.html">write_sim_dataset()</a></code>: simulated SPLONGGET-like data in the extractor’s layout.</li>
 <li>Vignettes: getting started, inputs (phasing recipe, extraction, cell metadata), outputs.</li>
 </ul></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
