@@ -1,3 +1,7 @@
+import os
+import subprocess
+import sys
+
 import numpy as np
 
 from scphasedcn.names import parse_name
@@ -12,6 +16,18 @@ def test_parse_name():
     assert cb2 == "-" and rid2 == rid and (p2, n2, s2) == (3, 3, -1)
     cb3, rid3, p3, n3, s3 = parse_name("plainread")
     assert (p3, n3, s3) == (1, 1, 0)
+    assert rid3 == 11265827583416625683   # blake2b-64 of the name, the same in every run
+
+
+def test_parse_name_fallback_stable_across_processes():
+    """The read id of a name outside the convention must not depend on PYTHONHASHSEED (salted hash())."""
+    code = "from scphasedcn.names import parse_name; print(parse_name('plainread')[1])"
+    out = set()
+    for seed in ("1", "2"):
+        env = dict(os.environ, PYTHONHASHSEED=seed)
+        out.add(subprocess.run([sys.executable, "-c", code], env=env, check=True, capture_output=True,
+                               text=True).stdout.strip())
+    assert len(out) == 1
 
 
 def test_regular_tiling():

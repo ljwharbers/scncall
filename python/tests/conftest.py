@@ -1,6 +1,7 @@
 """Synthetic SPLONGGET-like BAM for the scphasedcn tests (built with pysam; see docstrings for the expected answers)."""
 from __future__ import annotations
 
+import hashlib
 import os
 import random
 from pathlib import Path
@@ -19,7 +20,8 @@ UUIDS = {}
 def uuid_for(key: str) -> str:
     """Deterministic uuid-looking string per key."""
     if key not in UUIDS:
-        h = abs(hash(("u", key, len(UUIDS)))) % (16 ** 12)
+        dig = hashlib.blake2b(f"u|{key}|{len(UUIDS)}".encode(), digest_size=8).digest()
+        h = int.from_bytes(dig, "big") % (16 ** 12)
         base = f"{len(UUIDS):08x}-{(h >> 32) & 0xFFFF:04x}-4{(h >> 20) & 0xFFF:03x}-8{(h >> 8) & 0xFFF:03x}-{h & 0xFFFFFFFFFFFF:012x}"
         UUIDS[key] = base
     return UUIDS[key]
